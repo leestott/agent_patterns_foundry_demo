@@ -244,23 +244,29 @@ python -m pytest tests/ -v
 |------|--------------------|
 | ![Launcher](screenshots/01_launcher.png) | ![Launcher hover](screenshots/02_launcher_hover.png) |
 
-### Demo Dashboards
+### Model Settings
+
+| Foundry Local | Microsoft Foundry (Cloud) |
+|---------------|---------------------------|
+| ![Local settings](screenshots/02_model_settings_local.png) | ![Cloud settings](screenshots/03_model_settings_azure.png) |
+
+### Completed Demo Outcomes
 
 | Demo 1: Maker-Checker | Demo 2: Hierarchical Research |
 |------------------------|--------------------------------|
-| ![Maker-Checker](screenshots/03_maker_checker_dashboard.png) | ![Hierarchical Research](screenshots/04_hierarchical_research_dashboard.png) |
+| ![Maker-Checker completed](screenshots/04_maker_checker_dashboard.png) | ![Hierarchical Research completed](screenshots/05_hierarchical_research_dashboard.png) |
 
 | Demo 3: Hand-off Support | Demo 4: Network Brainstorm |
 |--------------------------|----------------------------|
-| ![Handoff Support](screenshots/05_handoff_support_dashboard.png) | ![Network Brainstorm](screenshots/06_network_brainstorm_dashboard.png) |
+| ![Handoff Support completed](screenshots/06_handoff_support_dashboard.png) | ![Network Brainstorm completed](screenshots/07_network_brainstorm_dashboard.png) |
 
 | Demo 5: Supervisor Router | Demo 6: Swarm + Auditor |
 |---------------------------|-------------------------|
-| ![Supervisor Router](screenshots/07_supervisor_router_dashboard.png) | ![Swarm + Auditor](screenshots/08_swarm_auditor_dashboard.png) |
+| ![Supervisor Router completed](screenshots/08_supervisor_router_dashboard.png) | ![Swarm + Auditor completed](screenshots/09_swarm_auditor_dashboard.png) |
 
 ### Live Status
 
-![Launcher with running demo](screenshots/09_launcher_final.png)
+![Launcher with completed demos](screenshots/10_launcher_final.png)
 
 Regenerate screenshots and a walkthrough video with:
 
