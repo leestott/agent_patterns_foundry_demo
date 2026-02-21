@@ -40,8 +40,8 @@ err.txt
 sdk_test.txt
 _debug_*.py
 
-# Screenshots and video (generated)
-screenshots/
+# Video files (generated, too large for git)
+screenshots/video/
 *.webm
 *.mp4
 

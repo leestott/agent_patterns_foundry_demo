@@ -33,6 +33,7 @@ The goal is not to build a production app, but to help you *see* and *understand
 
 - Python 3.10 or later
 - [Foundry Local](https://www.foundrylocal.ai/) installed (free, runs local models on-device)
+- **Or** a [Microsoft Foundry](https://ai.azure.com/) project for cloud-hosted models (no local GPU required)
 
 ```bash
 # Windows — install Foundry Local
@@ -41,6 +42,8 @@ winget install Microsoft.FoundryLocal
 # Pull a small, fast model (this is all you need for local runs)
 foundry model run qwen2.5-1.5b
 ```
+
+> **Cloud alternative:** If you prefer to skip the local install, set `MODEL_PROVIDER=azure_foundry` in `.env` and point to your Microsoft Foundry endpoint. See the [Switching to Microsoft Foundry](#switching-to-microsoft-foundry-cloud) section below.
 
 ### Install and Launch
 
@@ -180,9 +183,21 @@ You can also **load a saved run**: every execution is logged to `demos/<demo_id>
 
 ---
 
-## Switching to a Cloud Model
+## Switching to Microsoft Foundry (Cloud)
 
-When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch to **Microsoft Foundry** with a single change to `.env`:
+When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch from Foundry Local to **[Microsoft Foundry](https://ai.azure.com/)** with a single `.env` change. No code modifications required.
+
+### Why use the cloud?
+
+| | Foundry Local | Microsoft Foundry (Cloud) |
+|---|---|---|
+| **Setup** | Install runtime + pull model | Create a project at [ai.azure.com](https://ai.azure.com/) |
+| **GPU required** | Yes (on-device) | No (runs in Azure) |
+| **Models** | Compact models (e.g. `qwen2.5-1.5b`) | GPT-4o, GPT-4o-mini, model-router, and more |
+| **Cost** | Free | Pay-as-you-go Azure pricing |
+| **Best for** | Offline dev, demos, privacy-sensitive workloads | Production, longer reasoning, larger context windows |
+
+### Configuration
 
 ```bash
 # .env
@@ -192,7 +207,9 @@ AZURE_FOUNDRY_API_KEY=<your-key>
 AZURE_FOUNDRY_MODEL=gpt-4o-mini   # or model-router, gpt-4o, etc.
 ```
 
-Restart `app.py` and all demos now use Azure. The model settings panel in the launcher (click the gear icon ⚙) reflects the active provider live, so you always know which model is running.
+Restart `app.py` and all six demos now use your cloud model. The model settings panel in the launcher (click the gear icon) reflects the active provider live, so you always know which model is running.
+
+To switch back to local, set `MODEL_PROVIDER=foundry_local` (or remove the variable entirely; local is the default).
 
 No code changes: the `ModelConfig` singleton reads from `.env` once at startup and all demos call the same `get_foundry_client()` function.
 
@@ -246,7 +263,7 @@ After spending an hour with this demo pack, you'll be able to answer:
 - **How do I make agent routing explicit and traceable?** The Supervisor Router and Handoff demos show two complementary approaches.
 - **How do I add quality gates to agentic pipelines?** The Maker–Checker loop is the template.
 - **How do I separate generation from evaluation?** The Swarm + Auditor demo is the answer.
-- **How do I move from on-device to cloud?** One `.env` change.
+- **How do I move from on-device to cloud?** One `.env` change switches every demo from Foundry Local to Microsoft Foundry.
 
 These patterns appear directly in production systems. Recognising these patterns early means you will reach for the right tool instead of reinventing it.
 
@@ -276,4 +293,4 @@ These patterns appear directly in production systems. Recognising these patterns
 
 ---
 
-*Built with Microsoft Agent Framework and Foundry Local. MIT licensed.*
+*Built with Microsoft Agent Framework, Foundry Local, and Microsoft Foundry. MIT licensed.*

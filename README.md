@@ -138,6 +138,7 @@ agentpatterns/
 | Component | Technology |
 |-----------|-----------|
 | **Model Runtime** | [Foundry Local](https://foundrylocal.ai): on-device, OpenAI-compatible |
+| **Cloud Runtime** | [Microsoft Foundry](https://ai.azure.com/): swap in a cloud model with a single `.env` change |
 | **Orchestration** | [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) — Sequential, Concurrent, Handoff, Group Chat, Magentic |
 | **Agent SDK** | `agent-framework`, `agent-framework-orchestrations`, `agent-framework-foundry-local` |
 | **UI Backend** | FastAPI + WebSocket |
@@ -166,6 +167,21 @@ agentpatterns/
    This returns the actual URL (e.g. `http://localhost:47372`). The demos auto-detect this via the [foundry-local-sdk](https://github.com/microsoft/Foundry-Local).
 
 > **Note:** Foundry Local starts on a **dynamic port** — do not hardcode `5273`. The shared runtime uses `FoundryLocalManager` from the `foundry-local-sdk` to discover the correct endpoint automatically.
+
+---
+
+## Microsoft Foundry (Cloud)
+
+To use a cloud model instead of Foundry Local, set `MODEL_PROVIDER=azure_foundry` in your `.env` file:
+
+```bash
+MODEL_PROVIDER=azure_foundry
+AZURE_FOUNDRY_ENDPOINT=https://<your-project>.openai.azure.com/
+AZURE_FOUNDRY_API_KEY=<your-api-key>
+AZURE_FOUNDRY_MODEL=gpt-4o-mini
+```
+
+Restart `python app.py` and all demos will use Microsoft Foundry. No code changes needed — the `ModelConfig` singleton reads from `.env` at startup. You can also switch providers live from the settings panel in the launcher UI (click the gear icon).
 
 ---
 
