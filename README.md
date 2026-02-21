@@ -182,8 +182,8 @@ cp .env.example .env
 | `MODEL_PROVIDER` | `foundry_local` | `foundry_local` or `azure_foundry` |
 | `FOUNDRY_LOCAL_ENDPOINT` | *(auto-detected via SDK)* | Override local endpoint if needed |
 | `FOUNDRY_MODEL` | `qwen2.5-1.5b` | Local model alias |
-| `AZURE_FOUNDRY_ENDPOINT` | — | Azure AI Foundry endpoint URL |
-| `AZURE_FOUNDRY_API_KEY` | — | Azure AI Foundry API key |
+| `AZURE_FOUNDRY_ENDPOINT` | — | Microsoft Foundry endpoint URL |
+| `AZURE_FOUNDRY_API_KEY` | — | Microsoft Foundry API key |
 | `AZURE_FOUNDRY_MODEL` | `gpt-4o-mini` | Azure model name |
 | `AZURE_FOUNDRY_DEPLOYMENT` | — | Azure deployment name |
 | `UI_PORT` | `8765` | Web UI port |

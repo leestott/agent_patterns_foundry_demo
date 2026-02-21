@@ -3,7 +3,7 @@ Model configuration — runtime-switchable provider settings.
 
 Supports two providers:
   - "foundry_local"  : on-device Foundry Local service (auto-discovered)
-  - "azure_foundry"  : Microsoft Azure AI Foundry cloud endpoint
+  - "azure_foundry"  : Microsoft Foundry cloud endpoint
 
 The active config is held in a module-level singleton and written
 to/from the .env file so it persists across restarts.
@@ -31,7 +31,7 @@ class ModelConfig:
     local_model: str = os.getenv("FOUNDRY_MODEL", "qwen2.5-1.5b")
     local_endpoint_override: str = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "")
 
-    # ---- Azure AI Foundry settings -----------------------------------------
+    # ---- Microsoft Foundry settings ----------------------------------------
     azure_endpoint: str = os.getenv("AZURE_FOUNDRY_ENDPOINT", "")
     azure_api_key: str = os.getenv("AZURE_FOUNDRY_API_KEY", "")
     azure_model: str = os.getenv("AZURE_FOUNDRY_MODEL", "gpt-4o-mini")

@@ -234,7 +234,7 @@
                     🖥 Foundry Local
                 </button>
                 <button class="provider-tab" id="tab-cloud" role="tab" aria-selected="false" onclick="switchTab('azure_foundry')">
-                    ☁ Azure AI Foundry
+                    ☁ Microsoft Foundry
                 </button>
             </div>
 
@@ -252,17 +252,17 @@
                 </div>
             </div>
 
-            <!-- Azure AI Foundry section -->
+            <!-- Microsoft Foundry section -->
             <div class="settings-section" id="section-cloud" style="display:none;">
                 <div class="field-group">
                     <label for="azure-endpoint">Endpoint</label>
                     <input type="text" id="azure-endpoint" placeholder="https://your-project.openai.azure.com" autocomplete="off" />
-                    <span class="hint">Your Azure AI Foundry project endpoint URL.</span>
+                    <span class="hint">Your Microsoft Foundry project endpoint URL.</span>
                 </div>
                 <div class="field-group">
                     <label for="azure-key">API Key</label>
                     <input type="password" id="azure-key" placeholder="••••••••" autocomplete="off" />
-                    <span class="hint">Found in Azure AI Foundry → Settings → API keys.</span>
+                    <span class="hint">Found in Microsoft Foundry -> Settings -> API keys.</span>
                 </div>
                 <div class="field-group">
                     <label for="azure-model">Model</label>
@@ -371,7 +371,7 @@
             const txt = document.getElementById('active-provider-text');
             if (provider === 'azure_foundry') {
                 ind.className = 'provider-indicator cloud';
-                txt.textContent = 'Using: Azure AI Foundry';
+                txt.textContent = 'Using: Microsoft Foundry';
             } else {
                 ind.className = 'provider-indicator local';
                 const model = modelCfg?.foundry_local?.model || 'Foundry Local';

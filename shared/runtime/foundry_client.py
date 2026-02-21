@@ -1,10 +1,10 @@
 """
-Model client factory — supports Foundry Local and Azure AI Foundry.
+Model client factory — supports Foundry Local and Microsoft Foundry.
 
 Routes to the correct backend based on ``ModelConfig.provider``:
   - "foundry_local"  : uses the official ``foundry-local-sdk`` to discover
                        the service endpoint and resolve model IDs
-  - "azure_foundry"  : connects to an Azure AI Foundry endpoint
+  - "azure_foundry"  : connects to a Microsoft Foundry endpoint
 """
 
 import os
@@ -108,7 +108,7 @@ def get_foundry_client():
 
     Reads ModelConfig.provider and returns either:
       - A Foundry Local OpenAIChatClient (endpoint + model ID via SDK)
-      - An Azure AI Foundry OpenAIChatClient
+      - A Microsoft Foundry OpenAIChatClient
     """
     from agent_framework.openai import OpenAIChatClient
 
@@ -120,21 +120,21 @@ def get_foundry_client():
         provider = "foundry_local"
         cfg = None
 
-    # ── Azure AI Foundry ────────────────────────────────────────────────────
+    # ── Microsoft Foundry ───────────────────────────────────────────────────
     if provider == "azure_foundry":
         if not cfg.azure_endpoint:
             raise RuntimeError(
-                "Azure AI Foundry endpoint not configured. "
+                "Microsoft Foundry endpoint not configured. "
                 "Set AZURE_FOUNDRY_ENDPOINT in .env or via the Model Settings UI."
             )
         if not cfg.azure_api_key:
             raise RuntimeError(
-                "Azure AI Foundry API key not configured. "
+                "Microsoft Foundry API key not configured. "
                 "Set AZURE_FOUNDRY_API_KEY in .env or via the Model Settings UI."
             )
         base_url = _normalize_azure_base_url(cfg.azure_endpoint)
         model_id = cfg.azure_deployment or cfg.azure_model
-        print(f"[foundry_client] Azure AI Foundry: {base_url} -> '{model_id}'")
+        print(f"[foundry_client] Microsoft Foundry: {base_url} -> '{model_id}'")
         return OpenAIChatClient(
             api_key=cfg.azure_api_key,
             base_url=base_url,

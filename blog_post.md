@@ -20,7 +20,7 @@ The Demo Pack is an open-source, self-contained Python web application that show
 
 - **[Microsoft Agent Framework](https://github.com/microsoft/agent-framework)**: the orchestration engine that wires agents together using patterns like Sequential, Concurrent, Handoff, and Group Chat
 - **[Foundry Local](https://www.foundrylocal.ai/)**: Microsoft's on-device model runtime, so everything runs on your laptop without API keys or cloud costs
-- **[Azure AI Foundry](https://ai.azure.com/)**: optionally swap in a cloud model for higher-capability tasks, with a single `.env` change
+- **[Microsoft Foundry](https://ai.azure.com/)**: optionally swap in a cloud model for higher-capability tasks, with a single `.env` change
 - **FastAPI + WebSocket + D3.js**: a live dashboard that animates agent interactions as they happen
 
 The goal is not to build a production app, but to help you *see* and *understand* how agents work together at a structural level, so you can apply those patterns in your own projects.
@@ -182,7 +182,7 @@ You can also **load a saved run**: every execution is logged to `demos/<demo_id>
 
 ## Switching to a Cloud Model
 
-When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch to **Azure AI Foundry** with a single change to `.env`:
+When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch to **Microsoft Foundry** with a single change to `.env`:
 
 ```bash
 # .env
@@ -207,7 +207,7 @@ agentpatterns/
 ├── app.py                          # FastAPI + WebSocket server (start here)
 ├── shared/
 │   ├── runtime/
-│   │   ├── foundry_client.py       # Routes to Foundry Local or Azure AI Foundry
+│   │   ├── foundry_client.py       # Routes to Foundry Local or Microsoft Foundry
 │   │   ├── model_config.py         # Provider config singleton (reads .env)
 │   │   ├── agent_wrapper.py        # Wraps agents to emit trace events
 │   │   └── orchestrations.py       # Pattern helpers using AF orchestration builders
@@ -257,7 +257,7 @@ These patterns appear directly in production systems. Recognising these patterns
 - [Microsoft Agent Framework: Orchestration Patterns](https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/)
 - [Foundry Local Documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-local/)
 - [Foundry Local SDK (PyPI)](https://pypi.org/project/foundry-local-sdk/)
-- [Azure AI Foundry](https://ai.azure.com/)
+- [Microsoft Foundry](https://ai.azure.com/)
 - [Agent Framework GitHub](https://github.com/microsoft/agent-framework)
 - [Foundry Local GitHub](https://github.com/microsoft/Foundry-Local)
 
