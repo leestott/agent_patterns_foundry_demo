@@ -6,7 +6,14 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Foundry Local](https://img.shields.io/badge/Foundry%20Local-on--device-green)
+![Microsoft Foundry](https://img.shields.io/badge/Microsoft%20Foundry-cloud-orange)
 ![Agent Framework](https://img.shields.io/badge/Agent%20Framework-orchestrations-purple)
+
+---
+
+## Overview
+
+This demo pack contains **six runnable multi-agent orchestration patterns** — Sequential, Concurrent, Handoff, Group Chat, Supervisor, and Swarm — each with a live web dashboard that animates the agent graph, streams messages in real time, and logs every event for replay. It runs entirely on your laptop using [Foundry Local](https://foundrylocal.ai) (no API keys, no cloud costs), or you can switch to [Microsoft Foundry](https://ai.azure.com/) for cloud-hosted models with a single `.env` change. Built on [Microsoft Agent Framework](https://github.com/microsoft/agent-framework), the pack is designed to help developers *see* how agents collaborate so they can apply the right pattern in their own projects.
 
 ---
 
