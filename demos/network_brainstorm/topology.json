@@ -1,0 +1,19 @@
+{
+    "name": "Network Brainstorm (Peer Group Chat)",
+    "pattern": "Group Chat",
+    "description": "4 peers collaborate in a shared thread. Uses Agent Framework GroupChatBuilder.",
+    "nodes": [
+        {"id": "Innovator", "label": "Innovator", "role": "Creative Thinker"},
+        {"id": "Pragmatist", "label": "Pragmatist", "role": "Practical Evaluator"},
+        {"id": "DevilsAdvocate", "label": "Devil's Advocate", "role": "Critic"},
+        {"id": "Synthesizer", "label": "Synthesizer", "role": "Integrator"}
+    ],
+    "edges": [
+        {"from": "Innovator", "to": "Pragmatist", "label": ""},
+        {"from": "Pragmatist", "to": "DevilsAdvocate", "label": ""},
+        {"from": "DevilsAdvocate", "to": "Synthesizer", "label": ""},
+        {"from": "Synthesizer", "to": "Innovator", "label": ""},
+        {"from": "Innovator", "to": "DevilsAdvocate", "label": ""},
+        {"from": "Pragmatist", "to": "Synthesizer", "label": ""}
+    ]
+}

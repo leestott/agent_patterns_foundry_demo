@@ -1,0 +1,17 @@
+{
+    "name": "Hierarchical Research Brief",
+    "pattern": "Concurrent + Sequential",
+    "description": "Manager decomposes → Specialists research in parallel (ConcurrentBuilder) → Synthesizer merges (SequentialBuilder).",
+    "nodes": [
+        {"id": "Manager", "label": "Manager", "role": "Task Decomposer"},
+        {"id": "Specialist_A", "label": "Specialist A", "role": "Technical Researcher"},
+        {"id": "Specialist_B", "label": "Specialist B", "role": "Market Researcher"},
+        {"id": "Synthesizer", "label": "Synthesizer", "role": "Report Writer"}
+    ],
+    "edges": [
+        {"from": "Manager", "to": "Specialist_A", "label": "sub-task"},
+        {"from": "Manager", "to": "Specialist_B", "label": "sub-task"},
+        {"from": "Specialist_A", "to": "Synthesizer", "label": "findings"},
+        {"from": "Specialist_B", "to": "Synthesizer", "label": "findings"}
+    ]
+}

@@ -1,0 +1,17 @@
+{
+  "pattern": "concurrent + sequential",
+  "title": "Swarm + Auditor Custom",
+  "nodes": [
+    { "id": "Generator_A", "type": "agent", "label": "Generator A (Bold)" },
+    { "id": "Generator_B", "type": "agent", "label": "Generator B (Practical)" },
+    { "id": "Generator_C", "type": "agent", "label": "Generator C (Safe)" },
+    { "id": "Auditor", "type": "agent", "label": "Auditor" },
+    { "id": "Selector", "type": "agent", "label": "Selector" }
+  ],
+  "edges": [
+    { "source": "Generator_A", "target": "Auditor", "label": "proposal" },
+    { "source": "Generator_B", "target": "Auditor", "label": "proposal" },
+    { "source": "Generator_C", "target": "Auditor", "label": "proposal" },
+    { "source": "Auditor", "target": "Selector", "label": "scores" }
+  ]
+}

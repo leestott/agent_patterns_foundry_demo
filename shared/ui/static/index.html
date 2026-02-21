@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://d3js.org; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* ws://127.0.0.1:*;">
+    <title>Agent Patterns Visualizer</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header role="banner">
+        <h1>Agent Patterns Visualizer</h1>
+        <div id="pattern-badge" class="badge"></div>
+        <div class="controls" role="toolbar" aria-label="Demo controls">
+            <button id="btn-clear" title="Clear events" aria-label="Clear all events">Clear</button>
+            <button id="btn-replay" title="Replay saved run" aria-label="Replay a saved run">Replay</button>
+        </div>
+    </header>
+
+    <main role="main">
+        <section id="graph-panel" aria-label="Agent graph visualization">
+            <h2>Agent Graph</h2>
+            <svg id="graph-svg" role="img" aria-label="Agent relationship graph"></svg>
+            <div id="graph-legend"></div>
+        </section>
+
+        <section id="stream-panel" aria-label="Live event stream" aria-live="polite">
+            <h2>Live Stream</h2>
+            <div id="stream-messages" role="log" aria-label="Stream messages"></div>
+        </section>
+
+        <section id="agent-output-panel" aria-label="Per-agent output">
+            <h2>Agent Outputs</h2>
+            <div id="agent-outputs">Waiting for agent outputs…</div>
+        </section>
+
+        <section id="timeline-panel" aria-label="Event timeline">
+            <h2>Timeline</h2>
+            <div id="timeline-container" role="list" aria-label="Timeline events"></div>
+        </section>
+
+        <section id="detail-panel" aria-label="Event trace detail">
+            <h2>Trace Detail</h2>
+            <pre id="detail-content" role="region" aria-live="polite">Click a timeline event to inspect</pre>
+        </section>
+    </main>
+
+    <script src="/static/graph.js"></script>
+    <script src="/static/timeline.js"></script>
+    <script src="/static/stream.js"></script>
+    <script src="/static/standalone.js"></script>
+</body>
+</html>

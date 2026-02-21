@@ -1,0 +1,16 @@
+{
+    "name": "Supervisor Router",
+    "pattern": "Sequential + Handoff",
+    "description": "Supervisor classifies (Sequential), then routes to a specialist (Handoff). Uses SequentialBuilder + HandoffBuilder.",
+    "nodes": [
+        {"id": "Supervisor", "label": "Supervisor", "role": "Router/Classifier"},
+        {"id": "CodeExpert", "label": "Code Expert", "role": "Code Specialist"},
+        {"id": "DataExpert", "label": "Data Expert", "role": "Data Specialist"},
+        {"id": "DocExpert", "label": "Doc Expert", "role": "Documentation Specialist"}
+    ],
+    "edges": [
+        {"from": "Supervisor", "to": "CodeExpert", "label": "code task"},
+        {"from": "Supervisor", "to": "DataExpert", "label": "data task"},
+        {"from": "Supervisor", "to": "DocExpert", "label": "doc task"}
+    ]
+}

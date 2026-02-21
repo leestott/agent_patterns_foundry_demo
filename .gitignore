@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs and runs
+demos/*/runs/
+*.jsonl
+*.log
+
+# Scratch / debug output
+err.txt
+sdk_test.txt
+_debug_*.py
+
+# Screenshots and video (generated)
+screenshots/
+*.webm
+*.mp4
+
+# Playwright MCP
+.playwright-mcp/

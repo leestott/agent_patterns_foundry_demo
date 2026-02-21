@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://d3js.org; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* ws://127.0.0.1:*;">
+    <title>Agent Patterns — Demo</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous"></script>
+    <style>
+        .back-link {
+            color: #58a6ff; text-decoration: none; font-size: 13px;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .demo-title { font-size: 14px; color: #c9d1d9; font-weight: 400; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .run-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: #3fb950;
+        }
+        .run-status .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #3fb950; animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .run-status.stopped { color: #8b949e; }
+        .run-status.stopped .dot { background: #484f58; animation: none; }
+
+        /* Prompt bar */
+        .prompt-bar {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 24px; background: #161b22; border-bottom: 1px solid #30363d;
+        }
+        .prompt-bar label { font-size: 12px; color: #8b949e; padding-top: 6px; white-space: nowrap; }
+        .prompt-bar textarea {
+            flex: 1; min-height: 36px; max-height: 120px; padding: 6px 10px;
+            border: 1px solid #30363d; border-radius: 6px; background: #0d1117;
+            color: #c9d1d9; font-size: 12px; font-family: 'Cascadia Code', monospace;
+            resize: vertical; line-height: 1.4;
+        }
+        .prompt-bar textarea:focus { outline: none; border-color: #58a6ff; }
+        .prompt-bar button {
+            padding: 6px 14px; border: 1px solid #238636; border-radius: 6px;
+            background: #238636; color: #fff; font-size: 12px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+        }
+        .prompt-bar button:hover { background: #2ea043; }
+    </style>
+</head>
+<body>
+    <a href="#prompt-input" class="skip-link" style="position:absolute;left:-9999px;top:0;background:#238636;color:#fff;padding:8px 16px;z-index:100;font-size:13px;" onfocus="this.style.left='0'" onblur="this.style.left='-9999px'">Skip to prompt</a>
+    <header role="banner">
+        <div class="header-left">
+            <a href="/" class="back-link">← All Demos</a>
+            <h1 id="demo-title">Agent Patterns</h1>
+            <div id="pattern-badge" class="badge"></div>
+            <div class="run-status" id="run-status">
+                <span class="dot"></span>
+                <span>Running</span>
+            </div>
+        </div>
+        <div class="controls" role="toolbar" aria-label="Demo controls">
+            <button id="btn-rerun" title="Re-run this demo" aria-label="Re-run this demo">Re-run</button>
+            <button id="btn-clear" title="Clear events" aria-label="Clear all events">Clear</button>
+            <button id="btn-replay" title="Replay saved run" aria-label="Replay a saved run">Replay</button>
+        </div>
+    </header>
+
+    <div class="prompt-bar" role="search" aria-label="Demo prompt input">
+        <label for="prompt-input">Prompt:</label>
+        <textarea id="prompt-input" placeholder="Enter a prompt to send to the agents…" aria-label="Prompt input"></textarea>
+        <button id="btn-send" onclick="sendPrompt()" aria-label="Run demo with prompt">▶ Run</button>
+    </div>
+
+    <main role="main">
+        <section id="graph-panel" aria-label="Agent graph visualization">
+            <h2>Agent Graph</h2>
+            <div class="graph-zoom-controls" role="toolbar" aria-label="Graph zoom controls">
+                <button id="btn-zoom-in"    title="Zoom in"    aria-label="Zoom in">+</button>
+                <button id="btn-zoom-out"   title="Zoom out"   aria-label="Zoom out">−</button>
+                <button id="btn-zoom-reset" title="Reset zoom" aria-label="Reset zoom">⋅</button>
+            </div>
+            <svg id="graph-svg" role="img" aria-label="Agent relationship graph"></svg>
+            <div id="graph-legend"></div>
+        </section>
+
+        <section id="stream-panel" aria-label="Live event stream" aria-live="polite">
+            <h2>Live Stream</h2>
+            <div id="stream-messages" role="log" aria-label="Stream messages"></div>
+        </section>
+
+        <section id="agent-output-panel" aria-label="Per-agent output">
+            <h2>Agent Outputs</h2>
+            <div id="agent-outputs"></div>
+        </section>
+
+        <section id="timeline-panel" aria-label="Event timeline">
+            <h2>Timeline</h2>
+            <div id="timeline-container" role="list" aria-label="Timeline events"></div>
+        </section>
+
+        <section id="detail-panel" aria-label="Event trace detail">
+            <h2>Trace Detail</h2>
+            <pre id="detail-content" role="region" aria-live="polite">Click a timeline event to inspect</pre>
+        </section>
+    </main>
+
+    <script src="/static/graph.js?v=2"></script>
+    <script src="/static/timeline.js"></script>
+    <script src="/static/stream.js"></script>
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

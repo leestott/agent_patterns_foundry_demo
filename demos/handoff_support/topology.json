@@ -1,0 +1,16 @@
+{
+    "name": "Hand-off Customer Support Triage",
+    "pattern": "Handoff",
+    "description": "Triage agent classifies and hands off to Billing or TechSupport. Uses Agent Framework HandoffBuilder.",
+    "nodes": [
+        {"id": "Triage", "label": "Triage", "role": "Classifier"},
+        {"id": "Billing", "label": "Billing", "role": "Billing Specialist"},
+        {"id": "TechSupport", "label": "TechSupport", "role": "Tech Specialist"}
+    ],
+    "edges": [
+        {"from": "Triage", "to": "Billing", "label": "billing issue"},
+        {"from": "Triage", "to": "TechSupport", "label": "tech issue"},
+        {"from": "Billing", "to": "Triage", "label": "escalate"},
+        {"from": "TechSupport", "to": "Triage", "label": "escalate"}
+    ]
+}

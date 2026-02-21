@@ -1,0 +1,13 @@
+{
+    "name": "Maker-Checker PR Review",
+    "pattern": "Sequential",
+    "description": "Worker drafts, Reviewer critiques, Worker revises. Uses Agent Framework SequentialBuilder.",
+    "nodes": [
+        {"id": "Worker", "label": "Worker", "role": "Drafter"},
+        {"id": "Reviewer", "label": "Reviewer", "role": "Critic"}
+    ],
+    "edges": [
+        {"from": "Worker", "to": "Reviewer", "label": "draft"},
+        {"from": "Reviewer", "to": "Worker", "label": "feedback"}
+    ]
+}

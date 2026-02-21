@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self';">
+    <title>Agent Patterns Demo Pack</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+
+        /* Header */
+        header {
+            padding: 32px 48px 24px;
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-bottom: 1px solid #30363d;
+            text-align: center;
+        }
+        header h1 { font-size: 28px; font-weight: 700; color: #58a6ff; margin-bottom: 8px; }
+        header p { color: #8b949e; font-size: 15px; max-width: 640px; margin: 0 auto; }
+        .tech-badges { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+        .tech-badge {
+            padding: 4px 12px; border-radius: 12px; font-size: 11px;
+            font-weight: 600; letter-spacing: 0.3px;
+            background: #21262d; color: #8b949e; border: 1px solid #30363d;
+        }
+        .tech-badge.foundry { color: #58a6ff; border-color: #1f6feb; background: #1f6feb22; }
+        .tech-badge.af { color: #a371f7; border-color: #a371f7; background: #a371f722; }
+
+        /* Status bar */
+        .status-bar {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 10px; background: #161b22; border-bottom: 1px solid #30363d;
+            font-size: 13px; color: #8b949e;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #484f58; }
+        .status-dot.running { background: #3fb950; animation: pulse 1.5s infinite; }
+        .status-dot.idle { background: #484f58; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .status-bar .btn-stop {
+            padding: 4px 12px; border: 1px solid #f8514944; border-radius: 6px;
+            background: #f8514922; color: #f85149; cursor: pointer; font-size: 12px;
+            display: none;
+        }
+        .status-bar .btn-stop:hover { background: #f8514933; }
+
+        /* Grid */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px; padding: 32px 48px; max-width: 1200px; margin: 0 auto;
+        }
+
+        /* Card */
+        .demo-card {
+            background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+            padding: 24px; cursor: pointer; transition: all 0.2s ease;
+            position: relative; overflow: hidden;
+        }
+        .demo-card:hover { border-color: #58a6ff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+        .demo-card.active { border-color: #3fb950; box-shadow: 0 0 0 1px #3fb950, 0 8px 24px rgba(63,185,80,.15); }
+
+        .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+        .card-number { color: #484f58; font-size: 13px; font-weight: 600; }
+        .card-title { font-size: 17px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+        .card-desc { font-size: 13px; color: #8b949e; line-height: 1.6; margin-bottom: 16px; }
+
+        .card-pattern-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 10px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 12px;
+        }
+        .pattern-sequential { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb; }
+        .pattern-handoff { background: #d2992233; color: #d29922; border: 1px solid #d29922; }
+        .pattern-group-chat { background: #a371f733; color: #a371f7; border: 1px solid #a371f7; }
+        .pattern-concurrent-\+-sequential { background: #3fb95033; color: #56d364; border: 1px solid #56d364; }
+        .pattern-sequential-\+-handoff { background: #e3b34133; color: #e3b341; border: 1px solid #e3b341; }
+
+        .card-agents { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .agent-chip {
+            padding: 2px 8px; border-radius: 6px; font-size: 11px;
+            background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+        }
+
+        .card-prompt-box {
+            margin-top: 12px; padding: 10px 12px;
+            background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+            font-size: 12px; color: #8b949e; line-height: 1.5;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            white-space: pre-wrap; word-break: break-word;
+            max-height: 80px; overflow-y: auto;
+        }
+        .card-prompt-label {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #58a6ff; margin-bottom: 4px;
+        }
+
+        .card-footer {
+            display: flex; align-items: center; justify-content: flex-end;
+            margin-top: 12px; gap: 8px;
+        }
+        .card-run-btn {
+            padding: 6px 16px; border: 1px solid #238636; border-radius: 6px;
+            background: #238636; color: #fff; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .card-run-btn:hover { background: #2ea043; }
+        .card-run-btn.running {
+            background: transparent; border-color: #3fb950; color: #3fb950;
+            cursor: default;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center; padding: 24px; color: #484f58; font-size: 12px;
+            border-top: 1px solid #30363d;
+        }
+        footer a { color: #58a6ff; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        /* ===== Model Settings Panel ===== */
+        .settings-btn {
+            position: absolute; right: 48px; top: 50%; transform: translateY(-50%);
+            background: #21262d; border: 1px solid #30363d; color: #8b949e;
+            border-radius: 8px; padding: 6px 12px; cursor: pointer;
+            font-size: 13px; display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .settings-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+
+        .settings-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+            z-index: 1000; align-items: flex-start; justify-content: flex-end;
+        }
+        .settings-overlay.open { display: flex; }
+
+        .settings-panel {
+            width: 420px; height: 100vh; overflow-y: auto;
+            background: #161b22; border-left: 1px solid #30363d;
+            padding: 28px 28px 40px; display: flex; flex-direction: column; gap: 20px;
+        }
+        .settings-panel h2 { font-size: 16px; font-weight: 700; color: #e6edf3; }
+        .settings-panel .close-btn {
+            background: none; border: none; color: #8b949e; font-size: 20px;
+            cursor: pointer; line-height: 1; padding: 4px;
+        }
+        .settings-panel .close-btn:hover { color: #e6edf3; }
+        .settings-header { display: flex; align-items: center; justify-content: space-between; }
+
+        /* Provider tabs */
+        .provider-tabs { display: flex; gap: 2px; background: #0d1117; border-radius: 8px; padding: 3px; }
+        .provider-tab {
+            flex: 1; padding: 8px 12px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;
+            background: transparent; color: #8b949e;
+        }
+        .provider-tab.active { background: #21262d; color: #e6edf3; }
+        .provider-tab:hover:not(.active) { color: #c9d1d9; }
+
+        /* Form fields */
+        .settings-section { display: flex; flex-direction: column; gap: 14px; }
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        .field-group label { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.4px; }
+        .field-group input, .field-group select {
+            background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+            color: #e6edf3; font-size: 13px; padding: 8px 12px; width: 100%;
+            outline: none; transition: border-color 0.2s;
+        }
+        .field-group input:focus, .field-group select:focus { border-color: #58a6ff; }
+        .field-group input[type="password"] { letter-spacing: 2px; }
+        .field-group .hint { font-size: 11px; color: #484f58; margin-top: 2px; }
+
+        /* Active indicator */
+        .provider-indicator {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 8px; font-size: 13px;
+            border: 1px solid #30363d; background: #0d1117;
+        }
+        .provider-indicator.local { border-color: #1f6feb; color: #58a6ff; }
+        .provider-indicator.cloud { border-color: #a371f7; color: #a371f7; }
+        .provider-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+        .save-btn {
+            padding: 10px 20px; background: #238636; border: 1px solid #2ea043;
+            color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px;
+            font-weight: 600; transition: background 0.2s; width: 100%;
+        }
+        .save-btn:hover { background: #2ea043; }
+        .save-msg {
+            font-size: 12px; color: #3fb950; text-align: center;
+            min-height: 18px; transition: opacity 0.3s;
+        }
+        .save-msg.error { color: #f85149; }
+
+        @media (max-width: 768px) {
+            .settings-panel { width: 100vw; }
+            .settings-btn { right: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="#demo-grid" class="skip-link" style="position:absolute;left:-9999px;top:0;background:#238636;color:#fff;padding:8px 16px;z-index:100;font-size:13px;" onfocus="this.style.left='0'" onblur="this.style.left='-9999px'">Skip to demos</a>
+    <header role="banner" style="position:relative;">
+        <h1>Agent Patterns Demo Pack</h1>
+        <p>Visual, demo-ready agent orchestration patterns powered by Foundry Local and the Microsoft Agent Framework.</p>
+        <div class="tech-badges">
+            <span class="tech-badge foundry">Foundry Local</span>
+            <span class="tech-badge af">Agent Framework</span>
+            <span class="tech-badge">Sequential</span>
+            <span class="tech-badge">Concurrent</span>
+            <span class="tech-badge">Handoff</span>
+            <span class="tech-badge">Group Chat</span>
+        </div>
+        <button class="settings-btn" id="open-settings" onclick="openSettings()" aria-label="Model settings" aria-haspopup="dialog">
+            ⚙ Model Settings
+        </button>
+    </header>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" onclick="overlayClick(event)">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h2 id="settings-title">Model Settings</h2>
+                <button class="close-btn" onclick="closeSettings()" aria-label="Close settings">✕</button>
+            </div>
+
+            <div class="provider-indicator local" id="active-provider-indicator">
+                <span class="dot"></span>
+                <span id="active-provider-text">Using: Foundry Local</span>
+            </div>
+
+            <div class="provider-tabs" role="tablist">
+                <button class="provider-tab active" id="tab-local" role="tab" aria-selected="true" onclick="switchTab('foundry_local')">
+                    🖥 Foundry Local
+                </button>
+                <button class="provider-tab" id="tab-cloud" role="tab" aria-selected="false" onclick="switchTab('azure_foundry')">
+                    ☁ Azure AI Foundry
+                </button>
+            </div>
+
+            <!-- Foundry Local section -->
+            <div class="settings-section" id="section-local">
+                <div class="field-group">
+                    <label for="local-model">Model</label>
+                    <select id="local-model" aria-label="Select local model"></select>
+                    <span class="hint">Models currently loaded in your Foundry Local service.</span>
+                </div>
+                <div class="field-group">
+                    <label for="local-endpoint">Endpoint Override <span style="font-weight:400">(optional)</span></label>
+                    <input type="text" id="local-endpoint" placeholder="e.g. http://127.0.0.1:59670" autocomplete="off" />
+                    <span class="hint">Leave blank to auto-detect via <code>foundry service status</code>.</span>
+                </div>
+            </div>
+
+            <!-- Azure AI Foundry section -->
+            <div class="settings-section" id="section-cloud" style="display:none;">
+                <div class="field-group">
+                    <label for="azure-endpoint">Endpoint</label>
+                    <input type="text" id="azure-endpoint" placeholder="https://your-project.openai.azure.com" autocomplete="off" />
+                    <span class="hint">Your Azure AI Foundry project endpoint URL.</span>
+                </div>
+                <div class="field-group">
+                    <label for="azure-key">API Key</label>
+                    <input type="password" id="azure-key" placeholder="••••••••" autocomplete="off" />
+                    <span class="hint">Found in Azure AI Foundry → Settings → API keys.</span>
+                </div>
+                <div class="field-group">
+                    <label for="azure-model">Model</label>
+                    <input type="text" id="azure-model" placeholder="e.g. gpt-4o-mini" autocomplete="off" />
+                </div>
+                <div class="field-group">
+                    <label for="azure-deployment">Deployment Name <span style="font-weight:400">(if different from model)</span></label>
+                    <input type="text" id="azure-deployment" placeholder="e.g. my-gpt4o-deployment" autocomplete="off" />
+                    <span class="hint">Leave blank to use the model name as the deployment.</span>
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveSettings()">Save &amp; Apply</button>
+            <div class="save-msg" id="save-msg" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div class="status-bar" role="status" aria-live="polite">
+        <span class="status-dot idle" id="status-dot" aria-hidden="true"></span>
+        <span id="status-text">No demo running</span>
+        <button class="btn-stop" id="btn-stop" onclick="stopDemo()" aria-label="Stop running demo">Stop</button>
+    </div>
+
+    <div class="demo-grid" id="demo-grid" role="main" aria-label="Available demos"></div>
+
+    <footer role="contentinfo">
+        <a href="https://github.com/microsoft/agent-framework" target="_blank">Microsoft Agent Framework</a>
+        &nbsp;·&nbsp;
+        <a href="https://foundrylocal.ai" target="_blank">Foundry Local</a>
+        &nbsp;·&nbsp;
+        <a href="/docs/architecture.md" target="_blank">Architecture</a>
+    </footer>
+
+    <script>
+        let demos = [];
+        let currentDemoId = null;
+        let pollingInterval = null;
+        let modelCfg = null;
+        let activeTab = 'foundry_local';
+
+        async function init() {
+            // Render cards immediately — don't wait for model-config (slow SDK probe)
+            const demosRes = await fetch('/api/demos');
+            demos = await demosRes.json();
+            renderCards();
+            checkStatus();
+
+            // Load model config in background; populate settings panel when ready
+            fetch('/api/model-config')
+                .then(r => r.json())
+                .then(cfg => { modelCfg = cfg; applyConfigToPanel(); })
+                .catch(() => {});
+        }
+
+        // ── Settings panel ──────────────────────────────────────────────────
+        function openSettings() {
+            document.getElementById('settings-overlay').classList.add('open');
+            document.getElementById('tab-' + (activeTab === 'foundry_local' ? 'local' : 'cloud')).focus();
+        }
+        function closeSettings() {
+            document.getElementById('settings-overlay').classList.remove('open');
+        }
+        function overlayClick(e) {
+            if (e.target === document.getElementById('settings-overlay')) closeSettings();
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tab-local').classList.toggle('active', tab === 'foundry_local');
+            document.getElementById('tab-cloud').classList.toggle('active', tab === 'azure_foundry');
+            document.getElementById('tab-local').setAttribute('aria-selected', tab === 'foundry_local');
+            document.getElementById('tab-cloud').setAttribute('aria-selected', tab === 'azure_foundry');
+            document.getElementById('section-local').style.display = tab === 'foundry_local' ? '' : 'none';
+            document.getElementById('section-cloud').style.display = tab === 'azure_foundry' ? '' : 'none';
+        }
+
+        function applyConfigToPanel() {
+            if (!modelCfg) return;
+            // Set active tab to match current provider
+            switchTab(modelCfg.provider || 'foundry_local');
+
+            // Populate local model dropdown
+            const sel = document.getElementById('local-model');
+            const available = modelCfg.foundry_local?.available_models || [];
+            const current = modelCfg.foundry_local?.model || '';
+            sel.innerHTML = '';
+            const models = available.includes(current) ? available : [current, ...available];
+            models.filter(Boolean).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m; opt.textContent = m;
+                if (m === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            document.getElementById('local-endpoint').value = modelCfg.foundry_local?.endpoint_override || '';
+            document.getElementById('azure-endpoint').value = modelCfg.azure_foundry?.endpoint || '';
+            document.getElementById('azure-key').value = modelCfg.azure_foundry?.api_key === '***' ? '' : (modelCfg.azure_foundry?.api_key || '');
+            document.getElementById('azure-model').value = modelCfg.azure_foundry?.model || '';
+            document.getElementById('azure-deployment').value = modelCfg.azure_foundry?.deployment || '';
+
+            updateProviderIndicator(modelCfg.provider);
+        }
+
+        function updateProviderIndicator(provider) {
+            const ind = document.getElementById('active-provider-indicator');
+            const txt = document.getElementById('active-provider-text');
+            if (provider === 'azure_foundry') {
+                ind.className = 'provider-indicator cloud';
+                txt.textContent = 'Using: Azure AI Foundry';
+            } else {
+                ind.className = 'provider-indicator local';
+                const model = modelCfg?.foundry_local?.model || 'Foundry Local';
+                txt.textContent = `Using: Foundry Local (${model})`;
+            }
+        }
+
+        async function saveSettings() {
+            const msg = document.getElementById('save-msg');
+            msg.textContent = '';
+            msg.className = 'save-msg';
+
+            const payload = {
+                provider: activeTab,
+                foundry_local: {
+                    model: document.getElementById('local-model').value,
+                    endpoint_override: document.getElementById('local-endpoint').value.trim(),
+                },
+                azure_foundry: {
+                    endpoint: document.getElementById('azure-endpoint').value.trim(),
+                    model: document.getElementById('azure-model').value.trim(),
+                    deployment: document.getElementById('azure-deployment').value.trim(),
+                },
+            };
+            const keyVal = document.getElementById('azure-key').value;
+            if (keyVal) payload.azure_foundry.api_key = keyVal;
+
+            try {
+                const res = await fetch('/api/model-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                modelCfg = await res.json();
+                if (!res.ok) {
+                    msg.textContent = modelCfg.error || 'Save failed';
+                    msg.className = 'save-msg error';
+                    return;
+                }
+                applyConfigToPanel();
+                msg.textContent = '✓ Settings saved';
+                setTimeout(() => { msg.textContent = ''; }, 3000);
+            } catch (e) {
+                msg.textContent = 'Network error — could not save';
+                msg.className = 'save-msg error';
+            }
+        }
+
+        // ── Demo cards ──────────────────────────────────────────────────────
+        function renderCards() {
+            const grid = document.getElementById('demo-grid');
+            grid.innerHTML = '';
+            demos.forEach((demo, i) => {
+                const card = document.createElement('div');
+                card.className = 'demo-card';
+                card.id = `card-${demo.id}`;
+
+                const patternClass = 'pattern-' + demo.pattern.replace(/\s+/g, '-').toLowerCase();
+
+                card.onclick = () => selectDemo(demo.id);
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-number">Demo ${i + 1}</span>
+                    </div>
+                    <div class="card-title">${escapeHtml(demo.title)}</div>
+                    <span class="card-pattern-badge ${patternClass}">${escapeHtml(demo.pattern)}</span>
+                    <div class="card-desc">${escapeHtml(demo.description)}</div>
+                    <div class="card-agents">
+                        ${demo.agents.map(a => `<span class="agent-chip">${escapeHtml(a)}</span>`).join('')}
+                    </div>
+                    ${demo.suggested_prompt ? `
+                    <div class="card-prompt-label">Suggested Prompt</div>
+                    <div class="card-prompt-box">${escapeHtml(demo.suggested_prompt)}</div>
+                    ` : ''}
+                    <div class="card-footer">
+                        <button class="card-run-btn" id="run-${escapeAttr(demo.id)}" onclick="event.stopPropagation(); runDemo('${escapeAttr(demo.id)}')">
+                            ▶ Run
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function selectDemo(demoId) {
+            await runDemo(demoId);
+        }
+
+        async function runDemo(demoId) {
+            // Start the demo (uses default suggested prompt)
+            const res = await fetch(`/api/run/${demoId}`, { method: 'POST' });
+            const data = await res.json();
+
+            if (data.status === 'started' || data.status === 'already_running') {
+                currentDemoId = demoId;
+                updateUI();
+                window.location.href = `/demo/${demoId}`;
+            }
+        }
+
+        async function stopDemo() {
+            await fetch('/api/stop', { method: 'POST' });
+            currentDemoId = null;
+            updateUI();
+        }
+
+        async function checkStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                currentDemoId = data.demo_id;
+                updateUI();
+            } catch (e) {}
+        }
+
+        function updateUI() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const stopBtn = document.getElementById('btn-stop');
+
+            // Update status bar
+            if (currentDemoId) {
+                const demo = demos.find(d => d.id === currentDemoId);
+                dot.className = 'status-dot running';
+                text.textContent = `Running: ${demo ? demo.title : currentDemoId}`;
+                stopBtn.style.display = 'inline-block';
+            } else {
+                dot.className = 'status-dot idle';
+                text.textContent = 'No demo running';
+                stopBtn.style.display = 'none';
+            }
+
+            // Update cards
+            document.querySelectorAll('.demo-card').forEach(card => {
+                const id = card.id.replace('card-', '');
+                card.classList.toggle('active', id === currentDemoId);
+                const btn = card.querySelector('.card-run-btn');
+                if (id === currentDemoId) {
+                    btn.textContent = '● Running';
+                    btn.className = 'card-run-btn running';
+                } else {
+                    btn.textContent = '▶ Run';
+                    btn.className = 'card-run-btn';
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return escapeHtml(text).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+        }
+
+        // Close panel on Escape
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+        init();
+        // Poll status every 3 seconds
+        pollingInterval = setInterval(checkStatus, 3000);
+    </script>
+</body>
+</html>
