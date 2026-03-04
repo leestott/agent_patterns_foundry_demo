@@ -19,25 +19,102 @@ This demo pack contains **six runnable multi-agent orchestration patterns** — 
 
 ## Quick Start
 
+### Prerequisites
+
+- **Python 3.10 or later** — check your version with `python --version`. Download from [python.org](https://www.python.org/downloads/) if needed.
+- **Git** — to clone this repo. Download from [git-scm.com](https://git-scm.com/) if needed.
+
+---
+
+### Step 1 — Install Foundry Local
+
+Foundry Local runs AI models entirely on your device — no API key or internet connection required during inference.
+
+**Windows (PowerShell or Command Prompt):**
 ```bash
-# 1. Install Foundry Local (see https://foundrylocal.ai)
-winget install Microsoft.FoundryLocal        # Windows
-# brew install foundrylocal                  # macOS (when available)
-
-# 2. Pull and start a model
-foundry model run qwen2.5-1.5b                 # small, fast model
-
-# 3. Clone & install
-cd agentpatterns
-python -m venv .venv
-.venv\Scripts\activate                       # Windows
-# source .venv/bin/activate                  # macOS/Linux
-pip install -r requirements.txt
-
-# 4. Launch the web app (all demos in one UI)
-python app.py
-# Open http://localhost:8765 — pick any demo from the launcher
+winget install Microsoft.FoundryLocal
 ```
+
+**macOS:** Support coming soon — check [foundrylocal.ai](https://foundrylocal.ai) for updates.
+
+---
+
+### Step 2 — Start a model
+
+```bash
+foundry model run qwen2.5-1.5b
+```
+
+This downloads (first run only) and starts the `qwen2.5-1.5b` model — a small, fast model well-suited for demos. Leave this terminal open.
+
+> **Tip:** Run `foundry model list` to see all available models.
+
+---
+
+### Step 3 — Clone the repository
+
+```bash
+git clone https://github.com/your-org/agent-patterns-foundry-demo.git
+cd agent-patterns-foundry-demo
+```
+
+---
+
+### Step 4 — Create a virtual environment
+
+A **virtual environment** keeps this project's Python packages separate from everything else on your system. This is a best practice that avoids version conflicts.
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+**Windows (Command Prompt):**
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Once activated, your terminal prompt will show `(.venv)` at the start — this confirms the virtual environment is active.
+
+> **Troubleshooting (Windows PowerShell):** If you see an error about script execution being disabled, run:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+> Then try activating again.
+
+---
+
+### Step 5 — Install dependencies
+
+With the virtual environment active, install all required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs the Microsoft Agent Framework, Foundry Local SDK, FastAPI, and all other dependencies. It typically takes 1–2 minutes.
+
+> **Verify the install:** Run `pip list` to see all installed packages.
+
+---
+
+### Step 6 — Launch the web app
+
+```bash
+python app.py
+```
+
+Open **http://localhost:8765** in your browser — you'll see the demo launcher. Pick any demo card to start it.
+
+> **Note:** Make sure Foundry Local is still running (from Step 2) before launching.
 
 ### Web App Launcher
 
