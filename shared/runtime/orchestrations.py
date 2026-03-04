@@ -160,9 +160,16 @@ async def run_concurrent(agents: list, input_text: str, event_bus: EventBus | No
 async def run_handoff(agents: list, input_text: str, start_agent=None,
                       event_bus: EventBus | None = None,
                       max_rounds: int = 6, **kwargs) -> Any:
-    """Run agents with handoff pattern using HandoffBuilder."""
-    from agent_framework.orchestrations import HandoffBuilder
+    """Run agents with handoff pattern.
 
+    Demonstrates explicit handoff: the start agent classifies input and signals
+    transfer via "Transferring to <AgentName>." in its response. The orchestrator
+    parses this signal and routes to the named specialist, passing full context.
+
+    Note: HandoffBuilder autonomous mode only emits streaming AgentResponseUpdate
+    chunks which cannot be captured per-agent. This implementation calls agents
+    directly and parses the transfer signal for reliable output capture.
+    """
     if event_bus:
         event_bus.emit(EventType.AGENT_STARTED, {
             "agent": "Orchestrator",
@@ -171,39 +178,66 @@ async def run_handoff(agents: list, input_text: str, start_agent=None,
             "timestamp": time.time(),
         })
 
-    raw_agents = [_unwrap(a) for a in agents]
-    start = _unwrap(start_agent) if start_agent else raw_agents[0]
-
-    def _max_messages_reached(messages) -> bool:
-        return len(messages) >= max_rounds * 2
-
-    builder = HandoffBuilder(
-        participants=raw_agents,
-    ).with_start_agent(start).with_autonomous_mode()
-    builder = builder.with_termination_condition(_max_messages_reached)
-
-    workflow = builder.build()
-
+    agent_map = {a.name: a for a in agents}
+    current = start_agent or agents[0]
     results = []
-    max_events = max_rounds * 50  # Hard safety limit on events
-    event_count = 0
-    async for event in workflow.run(input_text, stream=True):
-        event_count += 1
-        if event_count > max_events:
-            print(f"HandoffOrchestrator reached max events ({max_events}); forcing completion.")
-            break
-        if not event_bus:
-            continue
-        if event.type == "output":
-            _emit_output_messages(event.data, event_bus, EventType.AGENT_MESSAGE, results)
-        elif event.type == "handoff_sent":
-            event_bus.emit(EventType.HANDOFF, {
-                "from_agent": str(event.data)[:200] if event.data else "unknown",
-                "message": "Handoff",
+    context = input_text
+
+    for round_num in range(max_rounds):
+        agent_name = current.name
+
+        if event_bus:
+            event_bus.emit(EventType.AGENT_STARTED, {
+                "agent": agent_name,
                 "timestamp": time.time(),
             })
-        elif event.type in ("executor_invoked", "executor_completed"):
-            _emit_executor_events(event, event_bus)
+
+        try:
+            raw = _unwrap(current)
+            response = await raw.run(context)
+            text = _extract_text(response) if response else ""
+        except Exception as e:
+            if event_bus:
+                event_bus.emit(EventType.ERROR, {
+                    "agent": agent_name, "error": str(e), "timestamp": time.time(),
+                })
+            break
+
+        if event_bus:
+            event_bus.emit(EventType.AGENT_MESSAGE, {
+                "agent": agent_name, "message": text[:500], "timestamp": time.time(),
+            })
+            event_bus.emit(EventType.AGENT_COMPLETED, {
+                "agent": agent_name, "output": text[:500], "timestamp": time.time(),
+            })
+
+        results.append({"agent": agent_name, "text": text})
+
+        # Termination signals from specialist agents
+        if any(sig in text.upper() for sig in ("TASK COMPLETE", "RESOLVED")):
+            break
+
+        # Parse handoff signal: "Transferring to <AgentName>."
+        next_name = None
+        for name in agent_map:
+            if f"Transferring to {name}" in text:
+                next_name = name
+                break
+
+        if next_name and next_name != agent_name:
+            if event_bus:
+                event_bus.emit(EventType.HANDOFF, {
+                    "from_agent": agent_name,
+                    "to_agent": next_name,
+                    "message": f"{agent_name} → {next_name}",
+                    "timestamp": time.time(),
+                })
+            current = agent_map[next_name]
+            # Give the specialist the original request plus the routing agent's context
+            context = f"{input_text}\n\n[{agent_name} assessment]: {text}"
+        elif round_num > 0:
+            # Specialist has responded with no further handoff — done
+            break
 
     if event_bus:
         event_bus.emit(EventType.AGENT_COMPLETED, {
@@ -332,6 +366,42 @@ async def run_magentic(agents: list, input_text: str,
             _emit_output_messages(event.data, event_bus, EventType.AGENT_MESSAGE, results)
         elif event.type in ("executor_invoked", "executor_completed"):
             _emit_executor_events(event, event_bus)
+
+    # Fallback: if MagenticManager absorbed all output without routing to specialists
+    # (common with small models that can't follow the JSON progress ledger format),
+    # invoke each specialist directly with a role-focused prompt so all agents produce output.
+    specialist_names = {a.name for a in agents}
+    specialists_seen = {r["agent"] for r in results if r["agent"] in specialist_names}
+    if not specialists_seen:
+        print("[run_magentic] MagenticManager did not route to specialists; invoking them directly.")
+        for agent in agents:
+            role_prompt = (
+                f"Task: {input_text}\n\n"
+                f"You are the {agent.name}. Apply your specific expertise to this task."
+            )
+            if event_bus:
+                event_bus.emit(EventType.AGENT_STARTED, {
+                    "agent": agent.name, "timestamp": time.time(),
+                })
+            try:
+                raw = _unwrap(agent)
+                response = await raw.run(role_prompt)
+                text = _extract_text(response) if response else ""
+            except Exception as e:
+                if event_bus:
+                    event_bus.emit(EventType.ERROR, {
+                        "agent": agent.name, "error": str(e), "timestamp": time.time(),
+                    })
+                continue
+            if text:
+                if event_bus:
+                    event_bus.emit(EventType.AGENT_MESSAGE, {
+                        "agent": agent.name, "message": text[:500], "timestamp": time.time(),
+                    })
+                    event_bus.emit(EventType.AGENT_COMPLETED, {
+                        "agent": agent.name, "output": text[:500], "timestamp": time.time(),
+                    })
+                results.append({"agent": agent.name, "text": text})
 
     if event_bus:
         event_bus.emit(EventType.AGENT_COMPLETED, {

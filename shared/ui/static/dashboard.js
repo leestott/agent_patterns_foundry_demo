@@ -2,6 +2,10 @@ const demoId = window.location.pathname.split('/').pop();
 // Track per-agent outputs: { agentName: [messages] }
 const agentOutputs = {};
 
+// Model provider state
+let modelCfg = null;
+let activeTab = 'foundry_local';
+
 async function sendPrompt() {
     const promptEl = document.getElementById('prompt-input');
     const prompt = promptEl.value.trim();
@@ -90,6 +94,9 @@ async function sendPrompt() {
         } catch (e) {}
     }
     setInterval(pollStatus, 2000);
+
+    // Load model provider info and populate the badge
+    loadModelConfig();
 
     // Re-run button — re-sends with current prompt
     document.getElementById('btn-rerun').onclick = () => sendPrompt();
@@ -180,3 +187,133 @@ function clearAll() {
     Object.keys(agentOutputs).forEach(k => delete agentOutputs[k]);
     resetGraphHighlights();
 }
+
+// ── Model provider settings ────────────────────────────────────────────────
+
+async function loadModelConfig() {
+    try {
+        const res = await fetch('/api/model-config');
+        modelCfg = await res.json();
+        updateProviderBadge(modelCfg.provider);
+        applyConfigToPanel();
+    } catch (e) {}
+}
+
+function updateProviderBadge(provider) {
+    const btn = document.getElementById('btn-provider');
+    if (!btn) return;
+    if (provider === 'azure_foundry') {
+        btn.textContent = '☁ Microsoft Foundry';
+        btn.className = 'provider-pill cloud';
+    } else {
+        const model = modelCfg?.foundry_local?.model || 'Foundry Local';
+        btn.textContent = `🖥 ${model}`;
+        btn.className = 'provider-pill local';
+    }
+}
+
+function openSettings() {
+    document.getElementById('settings-overlay').classList.add('open');
+    document.getElementById('tab-' + (activeTab === 'foundry_local' ? 'local' : 'cloud')).focus();
+}
+
+function closeSettings() {
+    document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function overlayClick(e) {
+    if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-local').classList.toggle('active', tab === 'foundry_local');
+    document.getElementById('tab-cloud').classList.toggle('active', tab === 'azure_foundry');
+    document.getElementById('tab-local').setAttribute('aria-selected', tab === 'foundry_local');
+    document.getElementById('tab-cloud').setAttribute('aria-selected', tab === 'azure_foundry');
+    document.getElementById('section-local').style.display = tab === 'foundry_local' ? '' : 'none';
+    document.getElementById('section-cloud').style.display = tab === 'azure_foundry' ? '' : 'none';
+}
+
+function applyConfigToPanel() {
+    if (!modelCfg) return;
+    switchTab(modelCfg.provider || 'foundry_local');
+
+    const sel = document.getElementById('local-model');
+    const available = modelCfg.foundry_local?.available_models || [];
+    const current = modelCfg.foundry_local?.model || '';
+    sel.innerHTML = '';
+    const models = available.includes(current) ? available : [current, ...available];
+    models.filter(Boolean).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        if (m === current) opt.selected = true;
+        sel.appendChild(opt);
+    });
+
+    document.getElementById('local-endpoint').value = modelCfg.foundry_local?.endpoint_override || '';
+    document.getElementById('azure-endpoint').value = modelCfg.azure_foundry?.endpoint || '';
+    document.getElementById('azure-key').value = modelCfg.azure_foundry?.api_key === '***' ? '' : (modelCfg.azure_foundry?.api_key || '');
+    document.getElementById('azure-model').value = modelCfg.azure_foundry?.model || '';
+    document.getElementById('azure-deployment').value = modelCfg.azure_foundry?.deployment || '';
+
+    updateProviderIndicator(modelCfg.provider);
+}
+
+function updateProviderIndicator(provider) {
+    const ind = document.getElementById('active-provider-indicator');
+    const txt = document.getElementById('active-provider-text');
+    if (provider === 'azure_foundry') {
+        ind.className = 'provider-indicator cloud';
+        txt.textContent = 'Using: Microsoft Foundry';
+    } else {
+        ind.className = 'provider-indicator local';
+        const model = modelCfg?.foundry_local?.model || 'Foundry Local';
+        txt.textContent = `Using: Foundry Local (${model})`;
+    }
+    updateProviderBadge(provider);
+}
+
+async function saveSettings() {
+    const msg = document.getElementById('save-msg');
+    msg.textContent = '';
+    msg.className = 'save-msg';
+
+    const payload = {
+        provider: activeTab,
+        foundry_local: {
+            model: document.getElementById('local-model').value,
+            endpoint_override: document.getElementById('local-endpoint').value.trim(),
+        },
+        azure_foundry: {
+            endpoint: document.getElementById('azure-endpoint').value.trim(),
+            model: document.getElementById('azure-model').value.trim(),
+            deployment: document.getElementById('azure-deployment').value.trim(),
+        },
+    };
+    const keyVal = document.getElementById('azure-key').value;
+    if (keyVal) payload.azure_foundry.api_key = keyVal;
+
+    try {
+        const res = await fetch('/api/model-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        modelCfg = await res.json();
+        if (!res.ok) {
+            msg.textContent = modelCfg.error || 'Save failed';
+            msg.className = 'save-msg error';
+            return;
+        }
+        applyConfigToPanel();
+        msg.textContent = '✓ Settings saved';
+        setTimeout(() => { msg.textContent = ''; }, 3000);
+    } catch (e) {
+        msg.textContent = 'Network error — could not save';
+        msg.className = 'save-msg error';
+    }
+}
+
+// Close settings on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });

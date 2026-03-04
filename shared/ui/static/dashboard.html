@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://d3js.org; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* ws://127.0.0.1:*;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* ws://127.0.0.1:*;">
     <title>Agent Patterns — Demo</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous"></script>
@@ -46,6 +46,72 @@
             cursor: pointer; white-space: nowrap;
         }
         .prompt-bar button:hover { background: #2ea043; }
+
+        /* Provider pill in header */
+        .provider-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+            cursor: pointer; border: 1px solid #30363d; background: #21262d;
+            color: #8b949e; transition: all 0.2s; line-height: 1;
+        }
+        .provider-pill.local  { color: #58a6ff; border-color: #1f6feb; background: #1f6feb1a; }
+        .provider-pill.cloud  { color: #a371f7; border-color: #a371f7; background: #a371f71a; }
+        .provider-pill:hover  { opacity: 0.82; }
+
+        /* Settings overlay */
+        .settings-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+            z-index: 1000; align-items: flex-start; justify-content: flex-end;
+        }
+        .settings-overlay.open { display: flex; }
+        .settings-panel {
+            width: 420px; height: 100vh; overflow-y: auto;
+            background: #161b22; border-left: 1px solid #30363d;
+            padding: 28px 28px 40px; display: flex; flex-direction: column; gap: 20px;
+        }
+        .settings-panel h2 { font-size: 16px; font-weight: 700; color: #e6edf3; }
+        .settings-panel .close-btn {
+            background: none; border: none; color: #8b949e; font-size: 20px;
+            cursor: pointer; line-height: 1; padding: 4px;
+        }
+        .settings-panel .close-btn:hover { color: #e6edf3; }
+        .settings-header { display: flex; align-items: center; justify-content: space-between; }
+        .provider-tabs { display: flex; gap: 2px; background: #0d1117; border-radius: 8px; padding: 3px; }
+        .provider-tab {
+            flex: 1; padding: 8px 12px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;
+            background: transparent; color: #8b949e;
+        }
+        .provider-tab.active { background: #21262d; color: #e6edf3; }
+        .provider-tab:hover:not(.active) { color: #c9d1d9; }
+        .settings-section { display: flex; flex-direction: column; gap: 14px; }
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        .field-group label { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.4px; }
+        .field-group input, .field-group select {
+            background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+            color: #e6edf3; font-size: 13px; padding: 8px 12px; width: 100%;
+            outline: none; transition: border-color 0.2s;
+        }
+        .field-group input:focus, .field-group select:focus { border-color: #58a6ff; }
+        .field-group input[type="password"] { letter-spacing: 2px; }
+        .field-group .hint { font-size: 11px; color: #484f58; margin-top: 2px; }
+        .provider-indicator {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 8px; font-size: 13px;
+            border: 1px solid #30363d; background: #0d1117;
+        }
+        .provider-indicator.local { border-color: #1f6feb; color: #58a6ff; }
+        .provider-indicator.cloud { border-color: #a371f7; color: #a371f7; }
+        .provider-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .save-btn {
+            padding: 10px 20px; background: #238636; border: 1px solid #2ea043;
+            color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px;
+            font-weight: 600; transition: background 0.2s; width: 100%;
+        }
+        .save-btn:hover { background: #2ea043; }
+        .save-msg { font-size: 12px; color: #3fb950; text-align: center; min-height: 18px; transition: opacity 0.3s; }
+        .save-msg.error { color: #f85149; }
+        @media (max-width: 768px) { .settings-panel { width: 100vw; } }
     </style>
 </head>
 <body>
@@ -61,6 +127,7 @@
             </div>
         </div>
         <div class="controls" role="toolbar" aria-label="Demo controls">
+            <button id="btn-provider" class="provider-pill" onclick="openSettings()" title="Switch model provider" aria-label="Model provider — click to switch">🖥 Foundry Local</button>
             <button id="btn-rerun" title="Re-run this demo" aria-label="Re-run this demo">Re-run</button>
             <button id="btn-clear" title="Clear events" aria-label="Clear all events">Clear</button>
             <button id="btn-replay" title="Replay saved run" aria-label="Replay a saved run">Replay</button>
@@ -110,5 +177,69 @@
     <script src="/static/timeline.js"></script>
     <script src="/static/stream.js"></script>
     <script src="/static/dashboard.js"></script>
+
+    <!-- Model Settings Overlay -->
+    <div class="settings-overlay" id="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" onclick="overlayClick(event)">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h2 id="settings-title">Model Settings</h2>
+                <button class="close-btn" onclick="closeSettings()" aria-label="Close settings">✕</button>
+            </div>
+
+            <div class="provider-indicator local" id="active-provider-indicator">
+                <span class="dot"></span>
+                <span id="active-provider-text">Using: Foundry Local</span>
+            </div>
+
+            <div class="provider-tabs" role="tablist">
+                <button class="provider-tab active" id="tab-local" role="tab" aria-selected="true" onclick="switchTab('foundry_local')">
+                    🖥 Foundry Local
+                </button>
+                <button class="provider-tab" id="tab-cloud" role="tab" aria-selected="false" onclick="switchTab('azure_foundry')">
+                    ☁ Microsoft Foundry
+                </button>
+            </div>
+
+            <!-- Foundry Local section -->
+            <div class="settings-section" id="section-local">
+                <div class="field-group">
+                    <label for="local-model">Model</label>
+                    <select id="local-model" aria-label="Select local model"></select>
+                    <span class="hint">Models currently loaded in your Foundry Local service.</span>
+                </div>
+                <div class="field-group">
+                    <label for="local-endpoint">Endpoint Override <span style="font-weight:400">(optional)</span></label>
+                    <input type="text" id="local-endpoint" placeholder="e.g. http://127.0.0.1:59670" autocomplete="off" />
+                    <span class="hint">Leave blank to auto-detect via <code>foundry service status</code>.</span>
+                </div>
+            </div>
+
+            <!-- Microsoft Foundry section -->
+            <div class="settings-section" id="section-cloud" style="display:none;">
+                <div class="field-group">
+                    <label for="azure-endpoint">Endpoint</label>
+                    <input type="text" id="azure-endpoint" placeholder="https://your-project.openai.azure.com" autocomplete="off" />
+                    <span class="hint">Your Microsoft Foundry project endpoint URL.</span>
+                </div>
+                <div class="field-group">
+                    <label for="azure-key">API Key</label>
+                    <input type="password" id="azure-key" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="off" />
+                    <span class="hint">Found in Microsoft Foundry &rarr; Settings &rarr; API keys.</span>
+                </div>
+                <div class="field-group">
+                    <label for="azure-model">Model</label>
+                    <input type="text" id="azure-model" placeholder="e.g. gpt-4o-mini" autocomplete="off" />
+                </div>
+                <div class="field-group">
+                    <label for="azure-deployment">Deployment Name <span style="font-weight:400">(if different from model)</span></label>
+                    <input type="text" id="azure-deployment" placeholder="e.g. my-gpt4o-deployment" autocomplete="off" />
+                    <span class="hint">Leave blank to use the model name as the deployment.</span>
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveSettings()">Save &amp; Apply</button>
+            <div class="save-msg" id="save-msg" aria-live="polite"></div>
+        </div>
+    </div>
 </body>
 </html>

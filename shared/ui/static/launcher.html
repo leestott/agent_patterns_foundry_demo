@@ -192,6 +192,19 @@
         }
         .save-msg.error { color: #f85149; }
 
+        /* Provider chip in status bar */
+        .status-sep { width: 1px; height: 14px; background: #30363d; margin: 0 6px; display: inline-block; vertical-align: middle; }
+        .provider-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: none; background: transparent;
+            transition: all 0.2s; line-height: 1;
+        }
+        .provider-chip.local { color: #58a6ff; outline: 1px solid #1f6feb44; background: #1f6feb15; }
+        .provider-chip.cloud { color: #a371f7; outline: 1px solid #a371f744; background: #a371f715; }
+        .provider-chip:hover { opacity: 0.8; }
+        .provider-chip .chip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+
         @media (max-width: 768px) {
             .settings-panel { width: 100vw; }
             .settings-btn { right: 12px; }
@@ -212,7 +225,7 @@
             <span class="tech-badge">Group Chat</span>
         </div>
         <button class="settings-btn" id="open-settings" onclick="openSettings()" aria-label="Model settings" aria-haspopup="dialog">
-            ⚙ Model Settings
+            ⚙ <span id="settings-btn-label">Model Settings</span>
         </button>
     </header>
 
@@ -284,6 +297,11 @@
         <span class="status-dot idle" id="status-dot" aria-hidden="true"></span>
         <span id="status-text">No demo running</span>
         <button class="btn-stop" id="btn-stop" onclick="stopDemo()" aria-label="Stop running demo">Stop</button>
+        <span class="status-sep" aria-hidden="true"></span>
+        <button id="provider-chip" class="provider-chip local" onclick="openSettings()" title="Click to switch model provider" aria-label="Current model provider — click to switch">
+            <span class="chip-dot" aria-hidden="true"></span>
+            <span id="provider-chip-text">🖥 Foundry Local</span>
+        </button>
     </div>
 
     <div class="demo-grid" id="demo-grid" role="main" aria-label="Available demos"></div>
@@ -369,13 +387,22 @@
         function updateProviderIndicator(provider) {
             const ind = document.getElementById('active-provider-indicator');
             const txt = document.getElementById('active-provider-text');
+            const chip = document.getElementById('provider-chip');
+            const chipTxt = document.getElementById('provider-chip-text');
+            const btnLabel = document.getElementById('settings-btn-label');
             if (provider === 'azure_foundry') {
                 ind.className = 'provider-indicator cloud';
                 txt.textContent = 'Using: Microsoft Foundry';
+                if (chip) chip.className = 'provider-chip cloud';
+                if (chipTxt) chipTxt.textContent = '☁ Microsoft Foundry';
+                if (btnLabel) btnLabel.textContent = '☁ Microsoft Foundry';
             } else {
                 ind.className = 'provider-indicator local';
                 const model = modelCfg?.foundry_local?.model || 'Foundry Local';
                 txt.textContent = `Using: Foundry Local (${model})`;
+                if (chip) chip.className = 'provider-chip local';
+                if (chipTxt) chipTxt.textContent = `🖥 ${model}`;
+                if (btnLabel) btnLabel.textContent = `🖥 ${model}`;
             }
         }
 
