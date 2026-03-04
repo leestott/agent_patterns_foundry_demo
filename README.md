@@ -13,7 +13,7 @@
 
 ## Overview
 
-This demo pack contains **seven runnable multi-agent orchestration patterns** — Sequential, Concurrent, Handoff, Group Chat, Supervisor Router, Swarm + Auditor, and Magentic One — each with a live web dashboard that animates the agent graph, streams messages in real time, and logs every event for replay. It provides full coverage of every pattern in [Microsoft Agent Framework](https://github.com/microsoft/agent-framework): `SequentialBuilder`, `ConcurrentBuilder`, `HandoffBuilder`, `GroupChatBuilder`, and `MagenticBuilder`. It runs entirely on your laptop using [Foundry Local](https://foundrylocal.ai) (no API keys, no cloud costs), or you can switch to [Microsoft Foundry](https://ai.azure.com/) for cloud-hosted models with a single `.env` change. The pack is designed to help developers *see* how agents collaborate so they can apply the right pattern in their own projects.
+This demo pack contains **seven runnable multi-agent orchestration patterns** — Sequential, Concurrent, Handoff, Group Chat, Supervisor Router, Swarm + Auditor, and Magentic One — each with a live web dashboard that animates the agent graph, streams messages in real time, and logs every event for replay. It provides full coverage of every pattern in [Microsoft Agent Framework](https://github.com/microsoft/agent-framework): `SequentialBuilder`, `ConcurrentBuilder`, `HandoffBuilder`, `GroupChatBuilder`, and `MagenticBuilder`. It runs entirely on your laptop using [Foundry Local](https://foundrylocal.ai) (no API keys, no cloud costs), or you can switch to [Microsoft Foundry](https://ai.azure.com/) for cloud-hosted models deployed via the **model-router** with a single `.env` change. The pack is designed to help developers *see* how agents collaborate so they can apply the right pattern in their own projects.
 
 ---
 
@@ -26,9 +26,15 @@ This demo pack contains **seven runnable multi-agent orchestration patterns** �
 
 ---
 
-### Step 1 — Install Foundry Local
+### Step 1 — Set up your model provider
 
-Foundry Local runs AI models entirely on your device — no API key or internet connection required during inference.
+Choose **one** of the options below. You can switch between them at any time from the UI settings panel.
+
+---
+
+#### Option A — Foundry Local (on-device, no API key needed)
+
+Foundry Local runs AI models entirely on your device — no internet connection required during inference.
 
 **Windows (PowerShell or Command Prompt):**
 ```bash
@@ -39,7 +45,26 @@ winget install Microsoft.FoundryLocal
 
 ---
 
-### Step 2 — Start a model
+#### Option B — Microsoft Foundry (cloud, model-router)
+
+[Microsoft Foundry](https://ai.azure.com/) lets you deploy and route to cloud-hosted models via a single **model-router** endpoint.
+
+1. Sign in at [ai.azure.com](https://ai.azure.com/)
+2. Create or select a **project**
+3. In the left sidebar, go to **My assets → Models + endpoints**
+4. Click **+ Deploy model** and select your model choose **Model-Router** — this creates a smart routing endpoint that can balance across multiple model deployments
+6. Complete the deployment wizard; note the **Target URI** and **API key** from the deployment detail page
+7. Add them to your `.env` file see the .env.example:
+
+```
+
+> **What is model-router?** The model-router in Microsoft Foundry is a managed deployment type that intelligently routes requests across multiple model deployments based on availability, latency, and quota — giving you a single stable endpoint even as you add or swap underlying models.
+
+---
+
+### Step 2 — Start a model *(Foundry Local — Option A only)*
+
+If you chose **Option B (Microsoft Foundry)**, skip this step — your model is already running in the cloud.
 
 ```bash
 foundry model run qwen2.5-1.5b
@@ -114,7 +139,7 @@ python app.py
 
 Open **http://localhost:8765** in your browser — you'll see the demo launcher. Pick any demo card to start it.
 
-> **Note:** Make sure Foundry Local is still running (from Step 2) before launching.
+> **Note:** If you chose Option A (Foundry Local), make sure it is still running (from Step 2) before launching. If you chose Option B (Microsoft Foundry), ensure your `.env` has the endpoint and API key set.
 
 ### Web App Launcher
 
@@ -239,7 +264,7 @@ agentpatterns/
 | Component | Technology |
 |-----------|-----------|
 | **Model Runtime** | [Foundry Local](https://foundrylocal.ai): on-device, OpenAI-compatible |
-| **Cloud Runtime** | [Microsoft Foundry](https://ai.azure.com/): swap in a cloud model with a single `.env` change |
+| **Cloud Runtime** | [Microsoft Foundry](https://ai.azure.com/): model-router deployment — swap to cloud with a single `.env` change |
 | **Orchestration** | [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) — all five builders covered: `SequentialBuilder`, `ConcurrentBuilder`, `HandoffBuilder`, `GroupChatBuilder`, `MagenticBuilder` |
 | **Agent SDK** | `agent-framework`, `agent-framework-orchestrations`, `agent-framework-foundry-local` |
 | **UI Backend** | FastAPI + WebSocket |
@@ -273,16 +298,33 @@ agentpatterns/
 
 ## Microsoft Foundry (Cloud)
 
-To use a cloud model instead of Foundry Local, set `MODEL_PROVIDER=azure_foundry` in your `.env` file:
+[Microsoft Foundry](https://ai.azure.com/) provides cloud-hosted models via the **model-router** — a single managed endpoint that routes requests across your deployed models.
+
+### Deploy a model via model-router
+
+1. Sign in at [ai.azure.com](https://ai.azure.com/)
+2. Open your project (or create one: **+ New project**)
+3. Go to **My assets → Models + endpoints → + Deploy model**
+4. Choose your model (e.g. `gpt-4o-mini`, `Phi-4`, `Mistral-Large`)
+5. Set **Deployment type** to **Model router**
+6. Finish the wizard; on the deployment detail page copy:
+   - **Target URI** — the model-router endpoint
+   - **Key** — your API key
+
+### Configure `.env`
 
 ```bash
 MODEL_PROVIDER=azure_foundry
-AZURE_FOUNDRY_ENDPOINT=https://<your-project>.openai.azure.com/
+AZURE_FOUNDRY_ENDPOINT=https://<your-project>.services.ai.azure.com/models
 AZURE_FOUNDRY_API_KEY=<your-api-key>
 AZURE_FOUNDRY_MODEL=gpt-4o-mini
+# Optional: pin to a specific deployment name
+# AZURE_FOUNDRY_DEPLOYMENT=my-gpt4o-deployment
 ```
 
-Restart `python app.py` and all demos will use Microsoft Foundry. No code changes needed — the `ModelConfig` singleton reads from `.env` at startup. You can also switch providers live from the settings panel in the launcher UI (click the gear icon).
+Restart `python app.py` and all demos will route through Microsoft Foundry. No code changes needed — the `ModelConfig` singleton reads from `.env` at startup. You can also switch providers live from the **Model Settings** panel in the launcher UI (click the ⚙ gear icon or the provider chip in the header).
+
+> **Tip:** The model-router endpoint (`/models`) is compatible with the OpenAI Python SDK and the Microsoft Agent Framework without any additional changes.
 
 ---
 
