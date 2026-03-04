@@ -13,7 +13,7 @@
 
 ## Overview
 
-This demo pack contains **six runnable multi-agent orchestration patterns** — Sequential, Concurrent, Handoff, Group Chat, Supervisor, and Swarm — each with a live web dashboard that animates the agent graph, streams messages in real time, and logs every event for replay. It runs entirely on your laptop using [Foundry Local](https://foundrylocal.ai) (no API keys, no cloud costs), or you can switch to [Microsoft Foundry](https://ai.azure.com/) for cloud-hosted models with a single `.env` change. Built on [Microsoft Agent Framework](https://github.com/microsoft/agent-framework), the pack is designed to help developers *see* how agents collaborate so they can apply the right pattern in their own projects.
+This demo pack contains **seven runnable multi-agent orchestration patterns** — Sequential, Concurrent, Handoff, Group Chat, Supervisor Router, Swarm + Auditor, and Magentic One — each with a live web dashboard that animates the agent graph, streams messages in real time, and logs every event for replay. It provides full coverage of every pattern in [Microsoft Agent Framework](https://github.com/microsoft/agent-framework): `SequentialBuilder`, `ConcurrentBuilder`, `HandoffBuilder`, `GroupChatBuilder`, and `MagenticBuilder`. It runs entirely on your laptop using [Foundry Local](https://foundrylocal.ai) (no API keys, no cloud costs), or you can switch to [Microsoft Foundry](https://ai.azure.com/) for cloud-hosted models with a single `.env` change. The pack is designed to help developers *see* how agents collaborate so they can apply the right pattern in their own projects.
 
 ---
 
@@ -118,7 +118,7 @@ Open **http://localhost:8765** in your browser — you'll see the demo launcher.
 
 ### Web App Launcher
 
-The fastest way to explore all six demos is through the unified web app:
+The fastest way to explore all seven demos is through the unified web app:
 
 ```bash
 python app.py
@@ -142,6 +142,7 @@ python -m demos.handoff_support.run
 python -m demos.network_brainstorm.run
 python -m demos.supervisor_router.run
 python -m demos.swarm_auditor.run
+python -m demos.magentic_one.run
 # Each opens http://localhost:8765 with the agent graph animation
 ```
 
@@ -149,14 +150,29 @@ python -m demos.swarm_auditor.run
 
 ## Demos
 
-| # | Demo | Pattern | Agents | Architecture |
-|---|------|---------|--------|-------------|
-| 1 | [Maker–Checker PR Review](demos/maker_checker/) | Sequential | 2 (Worker + Reviewer) | Maker–Checker |
-| 2 | [Hierarchical Research Brief](demos/hierarchical_research/) | Concurrent | 4 (Manager + 2 Specialists + Synthesizer) | Hierarchical |
-| 3 | [Hand-off Customer Support](demos/handoff_support/) | Handoff | 3 (Triage + Billing + Tech) | Hand-off |
-| 4 | [Network Brainstorm](demos/network_brainstorm/) | Group Chat | 4 peers | Network/Peer |
-| 5 | [Supervisor Router](demos/supervisor_router/) | Sequential + Handoff | 4 (Supervisor + 3 Specialists) | Supervisor |
-| 6 | [Swarm + Auditor](demos/swarm_auditor/) | Concurrent + Sequential | 5 (3 Generators + Auditor + Selector) | Custom |
+### Pattern coverage
+
+All five Agent Framework orchestration builders are covered:
+
+| AF Pattern | Framework Builder | Demo(s) |
+|---|---|---|
+| Sequential | `SequentialBuilder` | [Maker–Checker PR Review](demos/maker_checker/) |
+| Concurrent | `ConcurrentBuilder` | [Hierarchical Research Brief](demos/hierarchical_research/), [Swarm + Auditor](demos/swarm_auditor/) |
+| Handoff | `HandoffBuilder` | [Hand-off Customer Support](demos/handoff_support/), [Supervisor Router](demos/supervisor_router/) |
+| Group Chat | `GroupChatBuilder` | [Network Brainstorm](demos/network_brainstorm/) |
+| Magentic One | `MagenticBuilder` | [Magentic One Assessment](demos/magentic_one/) |
+
+### All demos
+
+| # | Demo | AF Builder | Agents | Pattern |
+|---|------|-----------|--------|---------|
+| 1 | [Maker–Checker PR Review](demos/maker_checker/) | `SequentialBuilder` | 2 (Worker + Reviewer) | Sequential — iterative review loop, up to 3 rounds |
+| 2 | [Hierarchical Research Brief](demos/hierarchical_research/) | `ConcurrentBuilder` | 4 (Manager + 2 Specialists + Synthesizer) | Concurrent specialists → sequential synthesizer |
+| 3 | [Hand-off Customer Support](demos/handoff_support/) | `HandoffBuilder` | 3 (Triage + Billing + Tech) | Handoff — autonomous mode with termination condition |
+| 4 | [Network Brainstorm](demos/network_brainstorm/) | `GroupChatBuilder` | 4 peers | Group Chat — round-robin, 4 max rounds |
+| 5 | [Supervisor Router](demos/supervisor_router/) | `HandoffBuilder` | 4 (Supervisor + 3 Specialists) | Handoff — Supervisor transfers to matching specialist |
+| 6 | [Swarm + Auditor](demos/swarm_auditor/) | `ConcurrentBuilder` | 5 (3 Generators + Auditor + Selector) | Concurrent generators → sequential audit + selection |
+| 7 | [Magentic One Assessment](demos/magentic_one/) | `MagenticBuilder` | 4 (MagenticManager + Researcher + Strategist + Critic) | Magentic One — manager routes dynamically, not round-robin |
 
 ### Pick a demo → run → watch the agent graph animate
 
@@ -198,14 +214,15 @@ agentpatterns/
 │           ├── stream.js           # Live message stream
 │           └── styles.css          # Styling
 ├── demos/
-│   ├── maker_checker/              # Demo 1 — Sequential
-│   ├── hierarchical_research/      # Demo 2 — Concurrent + Sequential
-│   ├── handoff_support/            # Demo 3 — Handoff
-│   ├── network_brainstorm/         # Demo 4 — Group Chat
-│   ├── supervisor_router/          # Demo 5 — Sequential + Handoff
-│   └── swarm_auditor/              # Demo 6 — Concurrent + Sequential
+│   ├── maker_checker/              # Demo 1 — Sequential (SequentialBuilder)
+│   ├── hierarchical_research/      # Demo 2 — Concurrent (ConcurrentBuilder)
+│   ├── handoff_support/            # Demo 3 — Handoff (HandoffBuilder)
+│   ├── network_brainstorm/         # Demo 4 — Group Chat (GroupChatBuilder)
+│   ├── supervisor_router/          # Demo 5 — Handoff (HandoffBuilder)
+│   ├── swarm_auditor/              # Demo 6 — Concurrent (ConcurrentBuilder)
+│   └── magentic_one/               # Demo 7 — Magentic One (MagenticBuilder)
 ├── tests/
-│   ├── test_demos.py               # E2E demo validation (all 6)
+│   ├── test_demos.py               # E2E demo validation (all 7)
 │   ├── test_topology.py            # Unit tests — topology.json structure
 │   ├── test_event_bus.py           # Unit tests — EventBus
 │   └── test_model_config.py        # Unit tests — ModelConfig
@@ -223,7 +240,7 @@ agentpatterns/
 |-----------|-----------|
 | **Model Runtime** | [Foundry Local](https://foundrylocal.ai): on-device, OpenAI-compatible |
 | **Cloud Runtime** | [Microsoft Foundry](https://ai.azure.com/): swap in a cloud model with a single `.env` change |
-| **Orchestration** | [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) — Sequential, Concurrent, Handoff, Group Chat, Magentic |
+| **Orchestration** | [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) — all five builders covered: `SequentialBuilder`, `ConcurrentBuilder`, `HandoffBuilder`, `GroupChatBuilder`, `MagenticBuilder` |
 | **Agent SDK** | `agent-framework`, `agent-framework-orchestrations`, `agent-framework-foundry-local` |
 | **UI Backend** | FastAPI + WebSocket |
 | **Visualization** | D3.js (force-directed graph), vanilla JS (timeline/stream) |
@@ -348,9 +365,13 @@ python -m pytest tests/ -v
 |---------------------------|-------------------------|
 | ![Supervisor Router completed](screenshots/08_supervisor_router_dashboard.png) | ![Swarm + Auditor completed](screenshots/09_swarm_auditor_dashboard.png) |
 
+| Demo 7: Magentic One Assessment | |
+|----------------------------------|--|
+| ![Magentic One completed](screenshots/10_magentic_one_dashboard.png) | |
+
 ### Live Status
 
-![Launcher with completed demos](screenshots/10_launcher_final.png)
+![Launcher with all seven demos](screenshots/11_launcher_final.png)
 
 Regenerate screenshots and a walkthrough video with:
 

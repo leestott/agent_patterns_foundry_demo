@@ -1,0 +1,19 @@
+{
+    "name": "Magentic One Feasibility Assessment",
+    "pattern": "Magentic One",
+    "description": "MagenticManager intelligently sequences Researcher, Strategist, and Critic to produce a composite feasibility assessment. Uses Agent Framework MagenticBuilder.",
+    "nodes": [
+        {"id": "MagenticManager", "label": "Magentic Manager", "role": "Orchestrator"},
+        {"id": "Researcher", "label": "Researcher", "role": "Information Gathering"},
+        {"id": "Strategist", "label": "Strategist", "role": "Strategy Formation"},
+        {"id": "Critic", "label": "Critic", "role": "Risk Assessment"}
+    ],
+    "edges": [
+        {"from": "MagenticManager", "to": "Researcher", "label": "gather facts"},
+        {"from": "MagenticManager", "to": "Strategist", "label": "form strategy"},
+        {"from": "MagenticManager", "to": "Critic", "label": "assess risks"},
+        {"from": "Researcher", "to": "MagenticManager", "label": "findings"},
+        {"from": "Strategist", "to": "MagenticManager", "label": "strategy"},
+        {"from": "Critic", "to": "MagenticManager", "label": "risk assessment"}
+    ]
+}

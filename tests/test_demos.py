@@ -1,5 +1,5 @@
 """
-End-to-end validation for all 6 demos.
+End-to-end validation for all 7 demos.
 
 Runs each demo's run_demo() with an EventBus, collects events, and checks:
   1. No errors were emitted
@@ -60,6 +60,12 @@ DEMOS = [
         "module": "demos.swarm_auditor.run",
         "expected_agents": {"Generator_A", "Generator_B", "Generator_C", "Auditor", "Selector"},
         "label": "6. Swarm + Auditor",
+    },
+    {
+        "id": "magentic_one",
+        "module": "demos.magentic_one.run",
+        "expected_agents": {"Researcher", "Strategist", "Critic"},
+        "label": "7. Magentic One Assessment",
     },
 ]
 
@@ -152,6 +158,15 @@ async def validate_demo(demo: dict) -> dict:
             print(f"  MISSING: No support agent (Billing/TechSupport) produced output")
         else:
             print(f"  Handed off to: {agents_with_output & specialists}")
+    elif demo["id"] == "magentic_one":
+        # MagenticManager is an internal AF agent; check at least one specialist spoke
+        specialists = {"Researcher", "Strategist", "Critic"}
+        found = agents_with_output & specialists
+        if not found:
+            issues.append("No Magentic One specialist produced output")
+            print(f"  MISSING: No specialist (Researcher/Strategist/Critic) produced output")
+        else:
+            print(f"  Specialists that spoke: {found}")
     else:
         missing = demo["expected_agents"] - agents_with_output
         if missing:

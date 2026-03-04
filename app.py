@@ -84,8 +84,8 @@ DEMO_REGISTRY = [
     {
         "id": "supervisor_router",
         "title": "Supervisor Router",
-        "pattern": "sequential + handoff",
-        "description": "Supervisor classifies the task type, then routes to a specialist: Code, Data, or Docs.",
+        "pattern": "handoff",
+        "description": "Supervisor classifies the task and transfers to the matching specialist (Code, Data, or Docs) using HandoffBuilder autonomous mode.",
         "agents": ["Supervisor", "CodeExpert", "DataExpert", "DocExpert"],
         "module": "demos.supervisor_router.run",
         "suggested_prompt": "Write a Python function that reads a CSV file, groups rows by category, and returns the top 3 categories by total revenue. Include docstrings.",
@@ -94,10 +94,19 @@ DEMO_REGISTRY = [
         "id": "swarm_auditor",
         "title": "Swarm + Auditor",
         "pattern": "concurrent + sequential",
-        "description": "Three generators brainstorm in parallel, Auditor scores proposals, Selector picks the winner.",
+        "description": "Three generators brainstorm in parallel (ConcurrentBuilder), Auditor scores proposals, Selector picks the winner.",
         "agents": ["Generator_A", "Generator_B", "Generator_C", "Auditor", "Selector"],
         "module": "demos.swarm_auditor.run",
         "suggested_prompt": "Our mid-size SaaS company wants to reduce cloud infrastructure costs by 40% while maintaining 99.9% uptime and improving developer velocity. What should we do?",
+    },
+    {
+        "id": "magentic_one",
+        "title": "Magentic One Assessment",
+        "pattern": "magentic one",
+        "description": "MagenticManager intelligently sequences Researcher, Strategist, and Critic to produce a composite feasibility assessment.",
+        "agents": ["MagenticManager", "Researcher", "Strategist", "Critic"],
+        "module": "demos.magentic_one.run",
+        "suggested_prompt": "Assess the feasibility of adopting on-device AI models (like Foundry Local) for a mid-size enterprise. Cover: current state of the technology, a recommended adoption strategy, and the top risks to watch out for.",
     },
 ]
 

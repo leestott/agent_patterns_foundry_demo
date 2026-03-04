@@ -16,6 +16,7 @@ from pathlib import Path
 
 from shared.events import EventBus, EventType
 from shared.ui.server import start_ui
+from shared.runtime.orchestrations import run_concurrent
 from demos.swarm_auditor.agents import create_agents
 
 TOPOLOGY = json.loads((Path(__file__).parent / "topology.json").read_text())
@@ -28,22 +29,18 @@ async def run_demo(event_bus: EventBus, input_text: str | None = None):
     task = input_text or TASK_INPUT
     gen_a, gen_b, gen_c, auditor, selector = create_agents(event_bus)
 
-    event_bus.emit(EventType.AGENT_STARTED, {
-        "agent": "Orchestrator", "pattern": "concurrent + sequential",
-        "message": "Starting swarm generation phase",
-        "timestamp": time.time(),
-    })
-
-    # Phase 1: Concurrent — all generators run in parallel
-    results = await asyncio.gather(
-        gen_a.run(task),
-        gen_b.run(task),
-        gen_c.run(task),
+    # Phase 1: Concurrent — ConcurrentBuilder fans out to all generators in parallel
+    concurrent_results = await run_concurrent(
+        [gen_a, gen_b, gen_c],
+        task,
+        event_bus=event_bus,
     )
 
-    proposals = "\n\n".join(str(r) for r in results)
+    proposals = "\n\n".join(r["text"] for r in concurrent_results if r.get("text"))
+    if not proposals:
+        proposals = f"(no proposals generated for: {task})"
 
-    # Phase 2: Sequential — Auditor scores proposals
+    # Phase 2: Sequential — Auditor scores all proposals
     audit_input = f"Here are three proposals to evaluate:\n\n{proposals}"
     audit_result = await auditor.run(audit_input)
 

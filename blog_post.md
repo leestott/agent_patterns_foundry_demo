@@ -8,7 +8,7 @@
 
 You've probably heard the phrase "multi-agent AI" thrown around a lot lately. But what does it actually *look* like when multiple AI agents collaborate to solve a problem? How do they hand off work to each other? How do you spot a bottleneck? How do you know if the system is actually doing what you designed it to do?
 
-The **Agent Patterns Demo Pack** answers these questions visually and interactively. It gives you six runnable demonstrations, each a different collaboration pattern, with a web UI that lets you watch each agent think, communicate, and hand off in real time.
+The **Agent Patterns Demo Pack** answers these questions visually and interactively. It gives you seven runnable demonstrations, each a different collaboration pattern, with a web UI that lets you watch each agent think, communicate, and hand off in real time.
 
 This post walks you through the app, what each demo teaches, and how to get started in under five minutes.
 
@@ -16,7 +16,7 @@ This post walks you through the app, what each demo teaches, and how to get star
 
 ## What Is the Agent Patterns Demo Pack?
 
-The Demo Pack is an open-source, self-contained Python web application that showcases **six common multi-agent orchestration patterns** built with:
+The Demo Pack is an open-source, self-contained Python web application that showcases **seven common multi-agent orchestration patterns** built with:
 
 - **[Microsoft Agent Framework](https://github.com/microsoft/agent-framework)**: the orchestration engine that wires agents together using patterns like Sequential, Concurrent, Handoff, and Group Chat
 - **[Foundry Local](https://www.foundrylocal.ai/)**: Microsoft's on-device model runtime, so everything runs on your laptop without API keys or cloud costs
@@ -63,7 +63,7 @@ python app.py
 
 Open **http://localhost:8765** in your browser. That is it; you will see the launcher:
 
-![Launcher showing all six demo cards](screenshots/01_launcher.png)
+![Launcher showing all seven demo cards](screenshots/01_launcher.png)
 
 Each card shows the pattern name, a one-line description, and the agents involved. Click any card to start that demo and open its live dashboard.
 
@@ -85,7 +85,7 @@ You can also **load a saved run**: every execution is logged to `demos/<demo_id>
 
 ---
 
-## The Six Patterns: What You Will Learn
+## The Seven Patterns: What You Will Learn
 
 ### 1. Maker-Checker (Sequential loop with a quality gate)
 
@@ -183,6 +183,24 @@ You can also **load a saved run**: every execution is logged to `demos/<demo_id>
 
 ---
 
+### 7. Magentic One Assessment (Adaptive multi-agent orchestration)
+
+![Magentic One dashboard](screenshots/10_magentic_one_dashboard.png)
+
+**The pattern:** A `MagenticManager` orchestrator adaptively assigns tasks to three specialist agents — Researcher, Strategist, and Critic — without a fixed pipeline. The manager decides at each step which agent should act next based on the state of the conversation, then iterates until the task is complete.
+
+**What you'll learn:**
+- How Magentic One differs from all four previous patterns: there is no fixed graph, routing is dynamic and context-driven
+- How `MagenticBuilder` replaces hand-crafted routing logic with an intelligent manager that reads the conversation state
+- Why adaptive orchestration is the right tool for open-ended tasks where the required steps are not known in advance
+- How to structure agents with distinct roles (research, strategy, critique) for richer emergent reasoning
+
+**Default prompt:** `"Assess the feasibility of adopting on-device AI models (like Foundry Local) for a mid-size enterprise."` — a deliberately open-ended task that benefits from multi-perspective reasoning.
+
+**Real-world use:** Strategy assessment, feasibility analysis, research synthesis, any task where the number of steps or the right specialist is not known upfront.
+
+---
+
 ## Switching to Microsoft Foundry (Cloud)
 
 When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch from Foundry Local to **[Microsoft Foundry](https://ai.azure.com/)** with a single `.env` change. No code modifications required.
@@ -207,7 +225,7 @@ AZURE_FOUNDRY_API_KEY=<your-key>
 AZURE_FOUNDRY_MODEL=gpt-4o-mini   # or model-router, gpt-4o, etc.
 ```
 
-Restart `app.py` and all six demos now use your cloud model. The model settings panel in the launcher (click the gear icon) reflects the active provider live, so you always know which model is running.
+Restart `app.py` and all seven demos now use your cloud model. The model settings panel in the launcher (click the gear icon) reflects the active provider live, so you always know which model is running.
 
 To switch back to local, set `MODEL_PROVIDER=foundry_local` (or remove the variable entirely; local is the default).
 
@@ -242,7 +260,8 @@ agentpatterns/
     ├── handoff_support/
     ├── network_brainstorm/
     ├── supervisor_router/
-    └── swarm_auditor/
+    ├── swarm_auditor/
+    └── magentic_one/
 ```
 
 Every demo follows the same structure:
@@ -288,8 +307,9 @@ These patterns appear directly in production systems. Recognising these patterns
 | Hierarchical Research | Concurrent + Sequential | 4 | `ConcurrentBuilder` + `SequentialBuilder` |
 | Hand-off Support | Handoff | 3 | `HandoffBuilder` |
 | Network Brainstorm | Group Chat | 4 peers | `GroupChatBuilder` |
-| Supervisor Router | Sequential + Handoff | 4 | `SequentialBuilder` + `HandoffBuilder` |
+| Supervisor Router | Handoff | 4 | `HandoffBuilder` |
 | Swarm + Auditor | Concurrent + Sequential | 5 | `ConcurrentBuilder` + `SequentialBuilder` |
+| Magentic One Assessment | Magentic One | 4 | `MagenticBuilder` |
 
 ---
 

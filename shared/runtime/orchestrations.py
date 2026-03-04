@@ -260,6 +260,37 @@ async def run_group_chat(agents: list, input_text: str,
     return results
 
 
+# Explicit progress ledger prompt with a concrete example to handle small models (e.g. qwen2.5-1.5b)
+# that return flattened booleans instead of the required nested {"reason": ..., "answer": ...} objects.
+_MAGENTIC_PROGRESS_LEDGER_PROMPT = """Recall we are working on the following request:
+
+{task}
+
+And we have assembled the following team:
+
+{team}
+
+Assess the current progress and answer the questions below.
+
+CRITICAL FORMATTING RULE: Every field in your JSON response MUST be an object with exactly
+two keys: "reason" (a string) and "answer" (the value). NEVER output a bare boolean or string
+at the top level — always wrap it in the object structure.
+
+Here is the EXACT format you must follow (copy this structure exactly):
+
+{{
+    "is_request_satisfied": {{"reason": "Explain why the task is or is not complete.", "answer": false}},
+    "is_in_loop": {{"reason": "Explain whether you are repeating the same steps.", "answer": false}},
+    "is_progress_being_made": {{"reason": "Explain whether new progress is being made.", "answer": true}},
+    "next_speaker": {{"reason": "Explain why this person should speak next.", "answer": "{names}"}},
+    "instruction_or_question": {{"reason": "Explain the goal of this instruction.", "answer": "Your specific instruction to the next speaker."}}
+}}
+
+Now produce the JSON object for the current situation. Select next_speaker from: {names}
+Output ONLY the JSON object. Do not include any explanation, markdown, or text outside the JSON.
+"""
+
+
 async def run_magentic(agents: list, input_text: str,
                        event_bus: EventBus | None = None, **kwargs) -> Any:
     """Run agents with Magentic-One pattern using MagenticBuilder."""
@@ -279,13 +310,18 @@ async def run_magentic(agents: list, input_text: str,
     manager_client = get_foundry_client()
     manager = manager_client.as_agent(
         name="MagenticManager",
-        instructions="You are the Magentic-One manager. Coordinate the participants to complete the task.",
+        instructions=(
+            "You are the Magentic-One orchestration manager. Your only job is to assess progress "
+            "and output a JSON progress ledger when asked. Always follow the exact JSON schema provided. "
+            "Never output bare booleans — always wrap values in {\"reason\": ..., \"answer\": ...} objects."
+        ),
     )
 
     workflow = MagenticBuilder(
         participants=raw_agents,
         manager_agent=manager,
-        max_round_count=len(raw_agents) + 2,
+        max_round_count=len(raw_agents) * 3 + 3,
+        progress_ledger_prompt=_MAGENTIC_PROGRESS_LEDGER_PROMPT,
     ).build()
 
     results = []
