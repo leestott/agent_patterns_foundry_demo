@@ -32,7 +32,7 @@ async def run_demo(event_bus: EventBus, input_text: str | None = None):
         input_text=task,
         start_agent=supervisor,
         event_bus=event_bus,
-        max_rounds=3,
+        max_rounds=4,
     )
 
 
