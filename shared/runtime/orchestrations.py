@@ -195,7 +195,7 @@ async def run_handoff(agents: list, input_text: str, start_agent=None,
         if not event_bus:
             continue
         if event.type == "output":
-            _emit_output_messages(event.data, event_bus, EventType.HANDOFF, results)
+            _emit_output_messages(event.data, event_bus, EventType.AGENT_MESSAGE, results)
         elif event.type == "handoff_sent":
             event_bus.emit(EventType.HANDOFF, {
                 "from_agent": str(event.data)[:200] if event.data else "unknown",
