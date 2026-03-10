@@ -52,9 +52,7 @@ def get_foundry_endpoint() -> str:
         override = get_model_config().local_endpoint_override
         if override:
             # Strip /v1 suffix if present — callers expect the root URI
-            stripped = override.rstrip("/")
-            if stripped.endswith("/v1"):
-                stripped = stripped[:-3]
+            stripped = override.rstrip("/").removesuffix("/v1")
             return stripped
     except Exception:
         pass
@@ -62,9 +60,7 @@ def get_foundry_endpoint() -> str:
     env_ep = os.getenv("FOUNDRY_LOCAL_ENDPOINT")
     if env_ep:
         # Strip /v1 suffix if present — callers expect the root URI
-        stripped = env_ep.rstrip("/")
-        if stripped.endswith("/v1"):
-            stripped = stripped[:-3]
+        stripped = env_ep.rstrip("/").removesuffix("/v1")
         return stripped
 
     try:
