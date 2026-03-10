@@ -82,8 +82,8 @@ class TestGetFoundryEndpoint(unittest.TestCase):
 class TestGetFoundryClientEndpointOverride(unittest.TestCase):
     """Tests for endpoint-override branch in get_foundry_client."""
 
-    def _patch_model_config(self, local_endpoint_override=None, local_model="qwen2.5-1.5b"):
-        """Return a mock ModelConfig."""
+    def _create_mock_model_config(self, local_endpoint_override=None, local_model="qwen2.5-1.5b"):
+        """Return a mock ModelConfig (not patched — just an object)."""
         cfg = MagicMock()
         cfg.provider = "foundry_local"
         cfg.local_endpoint_override = local_endpoint_override
@@ -93,89 +93,65 @@ class TestGetFoundryClientEndpointOverride(unittest.TestCase):
     def _make_mock_client_class(self):
         """Return a mock OpenAIChatClient class that records constructor args."""
         mock_cls = MagicMock()
-        # When called as constructor, return a mock with recorded kwargs
+
         def capture_init(**kwargs):
             instance = MagicMock()
             instance._base_url = kwargs.get("base_url")
             instance._model_id = kwargs.get("model_id")
             instance._api_key = kwargs.get("api_key")
             return instance
+
         mock_cls.side_effect = capture_init
         return mock_cls
 
+    def _call_get_foundry_client(self, cfg, mock_client_cls, extra_env=None):
+        """Invoke get_foundry_client with agent_framework + model_config mocked."""
+        env = extra_env or {}
+        af_openai = MagicMock(OpenAIChatClient=mock_client_cls)
+        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
+             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": af_openai}), \
+             patch.dict("os.environ", env, clear=False):
+            from shared.runtime.foundry_client import get_foundry_client
+            return get_foundry_client()
+
     @patch("shared.runtime.foundry_client._get_manager")
     def test_override_without_v1_gets_v1_appended(self, mock_get_manager):
-        mock_manager = MagicMock()
-        mock_manager.get_model_info.return_value = None
-        mock_get_manager.return_value = mock_manager
-
-        mock_client_cls = self._make_mock_client_class()
-        cfg = self._patch_model_config(local_endpoint_override="http://localhost:5273")
-        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
-             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": MagicMock(OpenAIChatClient=mock_client_cls)}), \
-             patch.dict("os.environ", {}, clear=False):
-            from shared.runtime.foundry_client import get_foundry_client
-            client = get_foundry_client()
+        mock_get_manager.return_value.get_model_info.return_value = None
+        cfg = self._create_mock_model_config(local_endpoint_override="http://localhost:5273")
+        client = self._call_get_foundry_client(cfg, self._make_mock_client_class())
         self.assertEqual(client._base_url, "http://localhost:5273/v1")
 
     @patch("shared.runtime.foundry_client._get_manager")
     def test_override_with_v1_no_double_suffix(self, mock_get_manager):
-        mock_manager = MagicMock()
-        mock_manager.get_model_info.return_value = None
-        mock_get_manager.return_value = mock_manager
-
-        mock_client_cls = self._make_mock_client_class()
-        cfg = self._patch_model_config(local_endpoint_override="http://localhost:5273/v1")
-        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
-             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": MagicMock(OpenAIChatClient=mock_client_cls)}), \
-             patch.dict("os.environ", {}, clear=False):
-            from shared.runtime.foundry_client import get_foundry_client
-            client = get_foundry_client()
+        mock_get_manager.return_value.get_model_info.return_value = None
+        cfg = self._create_mock_model_config(local_endpoint_override="http://localhost:5273/v1")
+        client = self._call_get_foundry_client(cfg, self._make_mock_client_class())
         self.assertEqual(client._base_url, "http://localhost:5273/v1")
 
     @patch("shared.runtime.foundry_client._get_manager")
     def test_override_resolves_model_alias_via_sdk(self, mock_get_manager):
         mock_model_info = MagicMock()
         mock_model_info.id = "qwen2.5-1.5b-instruct-trtrtx-gpu:2"
-        mock_manager = MagicMock()
-        mock_manager.get_model_info.return_value = mock_model_info
-        mock_get_manager.return_value = mock_manager
-
-        mock_client_cls = self._make_mock_client_class()
-        cfg = self._patch_model_config(local_endpoint_override="http://localhost:5273/v1")
-        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
-             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": MagicMock(OpenAIChatClient=mock_client_cls)}), \
-             patch.dict("os.environ", {}, clear=False):
-            from shared.runtime.foundry_client import get_foundry_client
-            client = get_foundry_client()
+        mock_get_manager.return_value.get_model_info.return_value = mock_model_info
+        cfg = self._create_mock_model_config(local_endpoint_override="http://localhost:5273/v1")
+        client = self._call_get_foundry_client(cfg, self._make_mock_client_class())
         self.assertEqual(client._model_id, "qwen2.5-1.5b-instruct-trtrtx-gpu:2")
 
     @patch("shared.runtime.foundry_client._get_manager")
     def test_override_falls_back_to_raw_alias_when_sdk_fails(self, mock_get_manager):
         mock_get_manager.side_effect = Exception("SDK unavailable")
-
-        mock_client_cls = self._make_mock_client_class()
-        cfg = self._patch_model_config(local_endpoint_override="http://localhost:5273/v1")
-        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
-             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": MagicMock(OpenAIChatClient=mock_client_cls)}), \
-             patch.dict("os.environ", {}, clear=False):
-            from shared.runtime.foundry_client import get_foundry_client
-            client = get_foundry_client()
+        cfg = self._create_mock_model_config(local_endpoint_override="http://localhost:5273/v1")
+        client = self._call_get_foundry_client(cfg, self._make_mock_client_class())
         self.assertEqual(client._model_id, "qwen2.5-1.5b")
 
     @patch("shared.runtime.foundry_client._get_manager")
     def test_env_var_override_with_v1_no_double_suffix(self, mock_get_manager):
-        mock_manager = MagicMock()
-        mock_manager.get_model_info.return_value = None
-        mock_get_manager.return_value = mock_manager
-
-        mock_client_cls = self._make_mock_client_class()
-        cfg = self._patch_model_config(local_endpoint_override=None)
-        with patch("shared.runtime.model_config.get_model_config", return_value=cfg), \
-             patch.dict("sys.modules", {"agent_framework": MagicMock(), "agent_framework.openai": MagicMock(OpenAIChatClient=mock_client_cls)}), \
-             patch.dict("os.environ", {"FOUNDRY_LOCAL_ENDPOINT": "http://localhost:5273/v1"}, clear=False):
-            from shared.runtime.foundry_client import get_foundry_client
-            client = get_foundry_client()
+        mock_get_manager.return_value.get_model_info.return_value = None
+        cfg = self._create_mock_model_config(local_endpoint_override=None)
+        client = self._call_get_foundry_client(
+            cfg, self._make_mock_client_class(),
+            extra_env={"FOUNDRY_LOCAL_ENDPOINT": "http://localhost:5273/v1"},
+        )
         self.assertEqual(client._base_url, "http://localhost:5273/v1")
 
 
