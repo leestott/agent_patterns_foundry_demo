@@ -158,8 +158,9 @@ def get_foundry_client():
                 model_id = model_info.id
                 if model_id != alias:
                     print(f"[foundry_client] Resolved '{alias}' -> '{model_id}'")
-        except Exception:
-            pass  # SDK unavailable — use raw alias
+        except Exception as e:
+            print(f"[foundry_client] SDK alias resolution failed ({e}); using raw alias")
+            # SDK unavailable or failed — use raw alias
     else:
         try:
             manager = _get_manager()
