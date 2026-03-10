@@ -24,6 +24,20 @@ def _get_manager(bootstrap: bool = False):
     return FoundryLocalManager(bootstrap=bootstrap)
 
 
+def _ensure_v1_suffix(url: str) -> str:
+    """Normalize a Foundry Local URL so it always ends with ``/v1``.
+
+    Accepts either a root URL (``http://host:port``) or one that already
+    includes ``/v1`` (``http://host:port/v1``).  This prevents the
+    double-suffix problem (``…/v1/v1``) that occurs when callers blindly
+    append ``/v1``.
+    """
+    url = url.rstrip("/")
+    if url.endswith("/v1"):
+        return url
+    return f"{url}/v1"
+
+
 @lru_cache(maxsize=1)
 def get_foundry_endpoint() -> str:
     """Return the Foundry Local base service URI (without /v1).
@@ -37,13 +51,21 @@ def get_foundry_endpoint() -> str:
         from shared.runtime.model_config import get_model_config
         override = get_model_config().local_endpoint_override
         if override:
-            return override.rstrip("/")
+            # Strip /v1 suffix if present — callers expect the root URI
+            stripped = override.rstrip("/")
+            if stripped.endswith("/v1"):
+                stripped = stripped[:-3]
+            return stripped
     except Exception:
         pass
 
     env_ep = os.getenv("FOUNDRY_LOCAL_ENDPOINT")
     if env_ep:
-        return env_ep.rstrip("/")
+        # Strip /v1 suffix if present — callers expect the root URI
+        stripped = env_ep.rstrip("/")
+        if stripped.endswith("/v1"):
+            stripped = stripped[:-3]
+        return stripped
 
     try:
         manager = _get_manager()
@@ -144,27 +166,46 @@ def get_foundry_client():
     # ── Foundry Local (via official SDK) ────────────────────────────────────
     alias = cfg.local_model if cfg else os.getenv("FOUNDRY_MODEL", DEFAULT_MODEL)
 
-    try:
-        manager = _get_manager()
-        if not manager.is_service_running():
-            raise RuntimeError(
-                "Foundry Local service is not running. "
-                "Start it with: foundry model run qwen2.5-1.5b"
-            )
-        # endpoint already includes /v1 — e.g. "http://127.0.0.1:58627/v1"
-        base_url = manager.endpoint
-        api_key = manager.api_key
-        # Resolve alias -> full catalog ID (e.g. "qwen2.5-1.5b" -> "qwen2.5-1.5b-instruct-qnn-npu:2")
-        model_info = manager.get_model_info(alias)
-        model_id = model_info.id if model_info else alias
-        if model_id != alias:
-            print(f"[foundry_client] Resolved '{alias}' -> '{model_id}'")
-    except Exception as e:
-        print(f"[foundry_client] SDK lookup failed ({e}), falling back to legacy endpoint")
-        service_uri = get_foundry_endpoint()
-        base_url = f"{service_uri}/v1"
+    # If a manual endpoint override is set, use it but still resolve the model alias via SDK
+    endpoint_override = (cfg.local_endpoint_override if cfg else None) or os.getenv("FOUNDRY_LOCAL_ENDPOINT")
+    if endpoint_override:
+        # Normalize: accept URLs with or without /v1 suffix
+        base_url = _ensure_v1_suffix(endpoint_override)
         api_key = os.getenv("FOUNDRY_API_KEY", "foundry-local")
+        # Try to resolve the friendly alias to the actual model ID via SDK
         model_id = alias
+        try:
+            manager = _get_manager()
+            model_info = manager.get_model_info(alias)
+            if model_info:
+                model_id = model_info.id
+                if model_id != alias:
+                    print(f"[foundry_client] Resolved '{alias}' -> '{model_id}'")
+        except Exception as e:
+            print(f"[foundry_client] SDK alias resolution failed ({e}); using raw alias")
+            # SDK unavailable or failed — use raw alias
+    else:
+        try:
+            manager = _get_manager()
+            if not manager.is_service_running():
+                raise RuntimeError(
+                    "Foundry Local service is not running. "
+                    "Start it with: foundry model run qwen2.5-1.5b"
+                )
+            # endpoint already includes /v1 — e.g. "http://127.0.0.1:58627/v1"
+            base_url = manager.endpoint
+            api_key = manager.api_key
+            # Resolve alias -> full catalog ID (e.g. "qwen2.5-1.5b" -> "qwen2.5-1.5b-instruct-qnn-npu:2")
+            model_info = manager.get_model_info(alias)
+            model_id = model_info.id if model_info else alias
+            if model_id != alias:
+                print(f"[foundry_client] Resolved '{alias}' -> '{model_id}'")
+        except Exception as e:
+            print(f"[foundry_client] SDK lookup failed ({e}), falling back to legacy endpoint")
+            service_uri = get_foundry_endpoint()
+            base_url = f"{service_uri}/v1"
+            api_key = os.getenv("FOUNDRY_API_KEY", "foundry-local")
+            model_id = alias
 
     print(f"[foundry_client] Foundry Local: {base_url} -> '{model_id}'")
     return OpenAIChatClient(
