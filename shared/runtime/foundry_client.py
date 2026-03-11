@@ -24,6 +24,20 @@ def _get_manager(bootstrap: bool = False):
     return FoundryLocalManager(bootstrap=bootstrap)
 
 
+def _ensure_v1_suffix(url: str) -> str:
+    """Normalize a Foundry Local URL so it always ends with ``/v1``.
+
+    Accepts either a root URL (``http://host:port``) or one that already
+    includes ``/v1`` (``http://host:port/v1``).  This prevents the
+    double-suffix problem (``…/v1/v1``) that occurs when callers blindly
+    append ``/v1``.
+    """
+    url = url.rstrip("/")
+    if url.endswith("/v1"):
+        return url
+    return f"{url}/v1"
+
+
 @lru_cache(maxsize=1)
 def get_foundry_endpoint() -> str:
     """Return the Foundry Local base service URI (without /v1).
@@ -37,13 +51,17 @@ def get_foundry_endpoint() -> str:
         from shared.runtime.model_config import get_model_config
         override = get_model_config().local_endpoint_override
         if override:
-            return override.rstrip("/")
+            # Strip /v1 suffix if present — callers expect the root URI
+            stripped = override.rstrip("/").removesuffix("/v1")
+            return stripped
     except Exception:
         pass
 
     env_ep = os.getenv("FOUNDRY_LOCAL_ENDPOINT")
     if env_ep:
-        return env_ep.rstrip("/")
+        # Strip /v1 suffix if present — callers expect the root URI
+        stripped = env_ep.rstrip("/").removesuffix("/v1")
+        return stripped
 
     try:
         manager = _get_manager()
@@ -147,7 +165,8 @@ def get_foundry_client():
     # If a manual endpoint override is set, use it but still resolve the model alias via SDK
     endpoint_override = (cfg.local_endpoint_override if cfg else None) or os.getenv("FOUNDRY_LOCAL_ENDPOINT")
     if endpoint_override:
-        base_url = f"{endpoint_override.rstrip('/')}/v1"
+        # Normalize: accept URLs with or without /v1 suffix
+        base_url = _ensure_v1_suffix(endpoint_override)
         api_key = os.getenv("FOUNDRY_API_KEY", "foundry-local")
         # Try to resolve the friendly alias to the actual model ID via SDK
         model_id = alias
