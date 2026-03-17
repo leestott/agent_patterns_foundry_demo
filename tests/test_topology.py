@@ -29,6 +29,7 @@ DEMO_IDS = [
     "network_brainstorm",
     "supervisor_router",
     "swarm_auditor",
+    "magentic_one",
 ]
 
 

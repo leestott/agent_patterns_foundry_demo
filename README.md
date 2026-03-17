@@ -246,11 +246,13 @@ agentpatterns/
 │   ├── supervisor_router/          # Demo 5 — Handoff (HandoffBuilder)
 │   ├── swarm_auditor/              # Demo 6 — Concurrent (ConcurrentBuilder)
 │   └── magentic_one/               # Demo 7 — Magentic One (MagenticBuilder)
+├── agents.md                           # Agent reference — all 7 demos, model picker docs
 ├── tests/
 │   ├── test_demos.py               # E2E demo validation (all 7)
 │   ├── test_topology.py            # Unit tests — topology.json structure
 │   ├── test_event_bus.py           # Unit tests — EventBus
-│   └── test_model_config.py        # Unit tests — ModelConfig
+│   ├── test_model_config.py        # Unit tests — ModelConfig
+│   └── test_api.py                 # Unit tests — FastAPI endpoints incl. model picker
 └── docs/
     ├── architecture.md
     ├── demo-day-checklist.md
@@ -328,6 +330,39 @@ Restart `python app.py` and all demos will route through Microsoft Foundry. No c
 
 ---
 
+## Model Picker UI
+
+The launcher includes a live model picker that lets you switch models without editing `.env`. Click the **⚙** icon (or the provider chip) to open the settings panel.
+
+| Foundry Local | Microsoft Foundry |
+|---------------|-------------------|
+| ![Model picker — Foundry Local](screenshots/02_model_settings_foundry_local.png) | ![Model picker — Azure Foundry](screenshots/03_model_settings_azure_foundry.png) |
+
+### Foundry Local tab
+
+Each model card shows:
+- **Status badge**: `Loaded` (in memory), `Cached` (on disk), or `Available` (in catalog)
+- Device type (GPU / CPU), size in MB, tool-calling support, publisher
+
+Click any card to select it, then **Save & Apply**. The status chip in the header updates immediately.
+
+Click **↻ Refresh** to re-query the running Foundry Local service for the latest model list.
+
+### Microsoft Foundry tab
+
+Enter the **Endpoint** URL and **API Key** from your Foundry project. Click **↻ List Models** to browse available deployments, then click any entry to select it. Leave **Deployment Name** blank to use the model name directly.
+
+### API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/models/local` | Catalog models with `loaded`/`cached`/`catalog` status |
+| `GET` | `/api/models/azure` | Deployed models from the configured Foundry endpoint |
+| `GET` | `/api/model-config` | Current provider, model, and endpoint settings |
+| `POST` | `/api/model-config` | Update and persist provider/model settings |
+
+---
+
 ## Environment Configuration
 
 Copy `.env.example` to `.env` and adjust if needed:
@@ -352,8 +387,8 @@ cp .env.example .env
 ## Testing
 
 ```bash
-# Unit tests (topology, EventBus, ModelConfig) — no live service needed
-python -m pytest tests/test_topology.py tests/test_event_bus.py tests/test_model_config.py -v
+# Unit tests — no live service needed
+python -m pytest tests/test_topology.py tests/test_event_bus.py tests/test_model_config.py tests/test_api.py -v
 
 # E2E demo validation — requires Foundry Local running with a model loaded
 python tests/test_demos.py
@@ -379,19 +414,21 @@ python -m pytest tests/ -v
 
 ---
 
+---
+
+## Agent Reference
+
+See [agents.md](agents.md) for the full agent reference — every agent across all seven demos, their roles, instructions, a pattern decision guide, and model configuration documentation.
+
+---
+
 ## Screenshots
 
 ### Launcher
 
-| Home | Demo Cards (hover) |
-|------|--------------------|
-| ![Launcher](screenshots/01_launcher.png) | ![Launcher hover](screenshots/02_launcher_hover.png) |
-
-### Model Settings
-
-| Foundry Local | Microsoft Foundry (Cloud) |
-|---------------|---------------------------|
-| ![Local settings](screenshots/02_model_settings_local.png) | ![Cloud settings](screenshots/03_model_settings_azure.png) |
+| Home | Model Settings — Foundry Local | Model Settings — Azure Foundry |
+|------|--------------------------------|--------------------------------|
+| ![Launcher](screenshots/01_launcher.png) | ![Model picker — Foundry Local](screenshots/02_model_settings_foundry_local.png) | ![Model picker — Azure Foundry](screenshots/03_model_settings_azure_foundry.png) |
 
 ### Completed Demo Outcomes
 

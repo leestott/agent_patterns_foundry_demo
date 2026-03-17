@@ -201,6 +201,31 @@ You can also **load a saved run**: every execution is logged to `demos/<demo_id>
 
 ---
 
+## Choosing Your Model — The In-App Model Picker
+
+You no longer need to edit `.env` to switch models. The launcher includes a live **Model Settings** panel (click the ⚙ gear icon or the provider chip in the header) that lets you pick a model without restarting the app.
+
+| Foundry Local model picker | Microsoft Foundry model picker |
+|----------------------------|---------------------------------|
+| ![Foundry Local model picker](screenshots/02_model_settings_foundry_local.png) | ![Azure Foundry model picker](screenshots/03_model_settings_azure_foundry.png) |
+
+### Foundry Local tab
+
+Every model in the Foundry catalog is shown as a card with a colour-coded status badge:
+- **Loaded** (green) — the model is currently in memory; select and run immediately
+- **Cached** (blue) — downloaded to disk; will start in seconds
+- **Available** (grey) — in the catalog; downloads automatically on first use
+
+Each card also shows device type (GPU/CPU), size in MB, whether the model supports tool calling, and publisher. Select a card and click **Save & Apply** — the status chip in the header updates instantly and all subsequent demo runs use the new model.
+
+### Microsoft Foundry tab
+
+Paste your Foundry project endpoint URL and API key, then click **↻ List Models** to browse your deployed models. Click any row to select it. Optionally set a deployment name if it differs from the model name.
+
+This means you can now demo the same workflow back-to-back on a compact on-device model *and* a large cloud model, without touching a config file.
+
+---
+
 ## Switching to Microsoft Foundry (Cloud)
 
 When you want higher-capability responses (longer reasoning chains, larger context, better instruction following), you can switch from Foundry Local to **[Microsoft Foundry](https://ai.azure.com/)** with a single `.env` change. No code modifications required.
@@ -240,6 +265,7 @@ For developers who want to go beyond clicking buttons, here's the architecture a
 ```
 agentpatterns/
 ├── app.py                          # FastAPI + WebSocket server (start here)
+├── agents.md                       # Full agent reference — all 7 demos, model picker docs
 ├── shared/
 │   ├── runtime/
 │   │   ├── foundry_client.py       # Routes to Foundry Local or Microsoft Foundry

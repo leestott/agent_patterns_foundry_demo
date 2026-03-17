@@ -1,14 +1,19 @@
 """
-Shim — validation has moved to tests/test_demos.py.
+E2E demo validator — forwards to tests/test_demos.py.
 
-This file is kept for backwards compatibility. For the full test suite run:
+Usage:
+    python validate_demos.py            # run all 7 demo validations
+    python validate_demos.py --help     # show tests/test_demos.py help
+
+For the full unit + integration test suite run:
     python -m pytest tests/ -v
-For the E2E demo validation report:
-    python tests/test_demos.py
+
+For unit tests only (no live Foundry service needed):
+    python -m pytest tests/test_topology.py tests/test_event_bus.py \
+        tests/test_model_config.py tests/test_api.py -v
 """
 import subprocess
 import sys
 
 if __name__ == "__main__":
-    print("[info] validate_demos.py has moved to tests/test_demos.py")
     sys.exit(subprocess.run([sys.executable, "tests/test_demos.py"] + sys.argv[1:]).returncode)

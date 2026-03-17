@@ -272,6 +272,46 @@ async def get_model_config_endpoint():
     return JSONResponse(get_model_config().to_dict())
 
 
+@app.get("/api/models/local")
+async def list_local_models_endpoint():
+    """Return Foundry Local catalog models with live status (loaded/cached/catalog)."""
+    from shared.runtime.model_config import _list_local_models_detailed
+    return JSONResponse({
+        "models": _list_local_models_detailed(),
+        "selected": get_model_config().local_model,
+    })
+
+
+@app.get("/api/models/azure")
+async def list_azure_models_endpoint():
+    """List model deployments from the configured Microsoft Foundry endpoint."""
+    import httpx
+    from shared.runtime.foundry_client import _normalize_azure_base_url
+    cfg = get_model_config()
+    if not cfg.azure_endpoint or not cfg.azure_api_key:
+        return JSONResponse({"models": [], "selected": cfg.azure_model,
+                             "error": "Azure Foundry endpoint/key not configured"})
+    try:
+        base_url = _normalize_azure_base_url(cfg.azure_endpoint)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{base_url}/models",
+                headers={"api-key": cfg.azure_api_key, "Authorization": f"Bearer {cfg.azure_api_key}"},
+            )
+        if resp.status_code == 200:
+            data = resp.json()
+            models = [
+                {"id": m.get("id", ""), "owned_by": m.get("owned_by", "")}
+                for m in data.get("data", [])
+            ]
+            return JSONResponse({"models": models,
+                                 "selected": cfg.azure_deployment or cfg.azure_model})
+        return JSONResponse({"models": [], "selected": cfg.azure_model,
+                             "error": f"HTTP {resp.status_code}"})
+    except Exception as e:
+        return JSONResponse({"models": [], "selected": cfg.azure_model, "error": str(e)})
+
+
 @app.post("/api/model-config")
 async def update_model_config_endpoint(request: Request):
     try:

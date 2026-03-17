@@ -209,6 +209,64 @@
             .settings-panel { width: 100vw; }
             .settings-btn { right: 12px; }
         }
+
+        /* ===== Model Picker ===== */
+        .picker-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .picker-refresh-btn {
+            background: none; border: 1px solid #30363d; color: #8b949e;
+            border-radius: 5px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+            transition: all 0.2s; line-height: 1.6;
+        }
+        .picker-refresh-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+        .picker-refresh-btn:disabled { opacity: 0.4; cursor: default; }
+        .model-picker {
+            display: flex; flex-direction: column; gap: 4px;
+            max-height: 260px; overflow-y: auto;
+            border: 1px solid #30363d; border-radius: 8px; padding: 5px;
+            background: #0d1117;
+        }
+        .model-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 10px; border-radius: 6px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.15s;
+            background: transparent; text-align: left; width: 100%;
+        }
+        .model-card:hover { background: #21262d; border-color: #30363d; }
+        .model-card.selected { background: #1f6feb22; border-color: #1f6feb; }
+        .model-card-info { flex: 1; min-width: 0; }
+        .model-card-name {
+            font-size: 13px; font-weight: 600; color: #e6edf3;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .model-meta { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+        .model-meta-tag {
+            padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 600;
+            background: #21262d; color: #8b949e; border: 1px solid #30363d;
+        }
+        .model-status-badge {
+            padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; flex-shrink: 0;
+        }
+        .status-loaded  { background: #3fb95033; color: #56d364; border: 1px solid #3fb950; }
+        .status-cached  { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb; }
+        .status-catalog { background: #30363d;   color: #8b949e; border: 1px solid #484f58; }
+        .picker-msg { text-align: center; color: #484f58; font-size: 12px; padding: 20px 8px; }
+        .azure-model-list {
+            display: none; flex-direction: column; gap: 4px;
+            max-height: 180px; overflow-y: auto;
+            border: 1px solid #30363d; border-radius: 8px; padding: 5px;
+            background: #0d1117; margin-top: 4px;
+        }
+        .azure-model-list.open { display: flex; }
+        .azure-model-item {
+            padding: 6px 10px; border-radius: 5px; cursor: pointer;
+            font-size: 12px; color: #c9d1d9; background: transparent;
+            border: 1px solid transparent; transition: all 0.15s; text-align: left; width: 100%;
+        }
+        .azure-model-item:hover { background: #21262d; border-color: #30363d; }
+        .azure-model-item.selected { background: #a371f722; border-color: #a371f7; color: #a371f7; }
     </style>
 </head>
 <body>
@@ -254,9 +312,16 @@
             <!-- Foundry Local section -->
             <div class="settings-section" id="section-local">
                 <div class="field-group">
-                    <label for="local-model">Model</label>
-                    <select id="local-model" aria-label="Select local model"></select>
-                    <span class="hint">Models currently loaded in your Foundry Local service.</span>
+                    <div class="picker-toolbar">
+                        <label>Model</label>
+                        <button class="picker-refresh-btn" id="local-refresh-btn" onclick="refreshLocalModels()" title="Reload model list from Foundry Local">↻ Refresh</button>
+                    </div>
+                    <!-- hidden input holds the selected alias for saveSettings() -->
+                    <input type="hidden" id="local-model" value="" />
+                    <div class="model-picker" id="local-model-picker" role="listbox" aria-label="Select local model">
+                        <div class="picker-msg">Loading models…</div>
+                    </div>
+                    <span class="hint">🟢 Loaded = in memory &nbsp;·&nbsp; 🔵 Cached = on disk &nbsp;·&nbsp; ⚪ Available = in catalog</span>
                 </div>
                 <div class="field-group">
                     <label for="local-endpoint">Endpoint Override <span style="font-weight:400">(optional)</span></label>
@@ -275,11 +340,16 @@
                 <div class="field-group">
                     <label for="azure-key">API Key</label>
                     <input type="password" id="azure-key" placeholder="••••••••" autocomplete="off" />
-                    <span class="hint">Found in Microsoft Foundry -> Settings -> API keys.</span>
+                    <span class="hint">Found in Microsoft Foundry -&gt; Settings -&gt; API keys.</span>
                 </div>
                 <div class="field-group">
-                    <label for="azure-model">Model</label>
-                    <input type="text" id="azure-model" placeholder="e.g. gpt-4o-mini" autocomplete="off" />
+                    <div class="picker-toolbar">
+                        <label for="azure-model">Model</label>
+                        <button class="picker-refresh-btn" id="azure-refresh-btn" onclick="refreshAzureModels()" title="List models from your Foundry endpoint">↻ List Models</button>
+                    </div>
+                    <input type="text" id="azure-model" placeholder="e.g. gpt-4o-mini or model-router" autocomplete="off" />
+                    <div class="azure-model-list" id="azure-model-list" role="listbox" aria-label="Available Azure models"></div>
+                    <span class="hint">Type a model name or click List Models to browse deployments.</span>
                 </div>
                 <div class="field-group">
                     <label for="azure-deployment">Deployment Name <span style="font-weight:400">(if different from model)</span></label>
@@ -355,25 +425,17 @@
             document.getElementById('tab-cloud').setAttribute('aria-selected', tab === 'azure_foundry');
             document.getElementById('section-local').style.display = tab === 'foundry_local' ? '' : 'none';
             document.getElementById('section-cloud').style.display = tab === 'azure_foundry' ? '' : 'none';
+            // Auto-load models when switching to local tab (if settings panel is open)
+            if (tab === 'foundry_local') refreshLocalModels();
         }
 
         function applyConfigToPanel() {
             if (!modelCfg) return;
-            // Set active tab to match current provider
             switchTab(modelCfg.provider || 'foundry_local');
 
-            // Populate local model dropdown
-            const sel = document.getElementById('local-model');
-            const available = modelCfg.foundry_local?.available_models || [];
-            const current = modelCfg.foundry_local?.model || '';
-            sel.innerHTML = '';
-            const models = available.includes(current) ? available : [current, ...available];
-            models.filter(Boolean).forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m; opt.textContent = m;
-                if (m === current) opt.selected = true;
-                sel.appendChild(opt);
-            });
+            // Seed the hidden local-model input with the currently active model
+            const currentLocal = modelCfg.foundry_local?.model || '';
+            document.getElementById('local-model').value = currentLocal;
 
             document.getElementById('local-endpoint').value = modelCfg.foundry_local?.endpoint_override || '';
             document.getElementById('azure-endpoint').value = modelCfg.azure_foundry?.endpoint || '';
@@ -382,6 +444,130 @@
             document.getElementById('azure-deployment').value = modelCfg.azure_foundry?.deployment || '';
 
             updateProviderIndicator(modelCfg.provider);
+
+            // Load the model picker for whichever tab is active
+            if (activeTab === 'foundry_local') refreshLocalModels();
+        }
+
+        // ── Foundry Local model picker ──────────────────────────────────────
+        async function refreshLocalModels() {
+            const picker = document.getElementById('local-model-picker');
+            const btn = document.getElementById('local-refresh-btn');
+            const currentAlias = document.getElementById('local-model').value
+                || modelCfg?.foundry_local?.model || '';
+
+            picker.innerHTML = '<div class="picker-msg">Loading models from Foundry Local SDK…</div>';
+            if (btn) { btn.disabled = true; btn.textContent = '⟳ Loading…'; }
+
+            try {
+                const res = await fetch('/api/models/local');
+                const data = await res.json();
+                const selected = document.getElementById('local-model').value || data.selected || currentAlias;
+                document.getElementById('local-model').value = selected;
+                renderLocalModelPicker(picker, data.models || [], selected);
+            } catch (e) {
+                picker.innerHTML = '<div class="picker-msg">Could not load models — is Foundry Local running?</div>';
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
+            }
+        }
+
+        function renderLocalModelPicker(picker, models, selected) {
+            picker.innerHTML = '';
+            if (!models.length) {
+                picker.innerHTML = '<div class="picker-msg">No models found</div>';
+                return;
+            }
+            const statusLabel = { loaded: 'Loaded', cached: 'Cached', catalog: 'Available' };
+            const statusCls   = { loaded: 'status-loaded', cached: 'status-cached', catalog: 'status-catalog' };
+
+            models.forEach(m => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'model-card' + (m.alias === selected ? ' selected' : '');
+                btn.setAttribute('role', 'option');
+                btn.setAttribute('aria-selected', m.alias === selected);
+                btn.onclick = () => selectLocalModel(m.alias);
+
+                const sizeStr = m.file_size_mb
+                    ? (m.file_size_mb >= 1024
+                        ? (m.file_size_mb / 1024).toFixed(1) + ' GB'
+                        : m.file_size_mb + ' MB')
+                    : '';
+                const tags = [
+                    m.device_type,
+                    sizeStr,
+                    m.supports_tool_calling ? '🔧 tools' : null,
+                    m.publisher,
+                ].filter(Boolean);
+
+                const sl = statusLabel[m.status] || m.status;
+                const sc = statusCls[m.status] || 'status-catalog';
+
+                btn.innerHTML = `
+                    <div class="model-card-info">
+                        <div class="model-card-name">${escapeHtml(m.alias)}</div>
+                        ${tags.length ? `<div class="model-meta">${tags.map(t => `<span class="model-meta-tag">${escapeHtml(String(t))}</span>`).join('')}</div>` : ''}
+                    </div>
+                    <span class="model-status-badge ${sc}">${sl}</span>`;
+                picker.appendChild(btn);
+            });
+        }
+
+        function selectLocalModel(alias) {
+            document.getElementById('local-model').value = alias;
+            document.querySelectorAll('#local-model-picker .model-card').forEach(card => {
+                const isSelected = card.querySelector('.model-card-name')?.textContent === alias;
+                card.classList.toggle('selected', isSelected);
+                card.setAttribute('aria-selected', isSelected);
+            });
+        }
+
+        // ── Microsoft Foundry model picker ──────────────────────────────────
+        async function refreshAzureModels() {
+            const listEl = document.getElementById('azure-model-list');
+            const btn = document.getElementById('azure-refresh-btn');
+            listEl.innerHTML = '<div class="picker-msg">Querying endpoint…</div>';
+            listEl.classList.add('open');
+            if (btn) { btn.disabled = true; btn.textContent = '⟳ Loading…'; }
+
+            try {
+                const res = await fetch('/api/models/azure');
+                const data = await res.json();
+                if (data.error && !data.models?.length) {
+                    listEl.innerHTML = `<div class="picker-msg">${escapeHtml(data.error)}</div>`;
+                    return;
+                }
+                renderAzureModelList(listEl, data.models || [], data.selected || '');
+            } catch (e) {
+                listEl.innerHTML = '<div class="picker-msg">Network error — check endpoint & key.</div>';
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '↻ List Models'; }
+            }
+        }
+
+        function renderAzureModelList(listEl, models, selected) {
+            listEl.innerHTML = '';
+            if (!models.length) {
+                listEl.innerHTML = '<div class="picker-msg">No deployments found at this endpoint.</div>';
+                return;
+            }
+            const currentVal = document.getElementById('azure-model').value || selected;
+            models.forEach(m => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'azure-model-item' + (m.id === currentVal ? ' selected' : '');
+                btn.textContent = m.id + (m.owned_by ? ` (${m.owned_by})` : '');
+                btn.onclick = () => selectAzureModel(m.id);
+                listEl.appendChild(btn);
+            });
+        }
+
+        function selectAzureModel(id) {
+            document.getElementById('azure-model').value = id;
+            document.querySelectorAll('.azure-model-item').forEach(item => {
+                item.classList.toggle('selected', item.textContent.startsWith(id));
+            });
         }
 
         function updateProviderIndicator(provider) {
@@ -392,13 +578,14 @@
             const btnLabel = document.getElementById('settings-btn-label');
             if (provider === 'azure_foundry') {
                 ind.className = 'provider-indicator cloud';
-                txt.textContent = 'Using: Microsoft Foundry';
+                const azModel = document.getElementById('azure-model')?.value || modelCfg?.azure_foundry?.model || 'Microsoft Foundry';
+                txt.textContent = `Using: Microsoft Foundry (${azModel})`;
                 if (chip) chip.className = 'provider-chip cloud';
-                if (chipTxt) chipTxt.textContent = '☁ Microsoft Foundry';
-                if (btnLabel) btnLabel.textContent = '☁ Microsoft Foundry';
+                if (chipTxt) chipTxt.textContent = `☁ ${azModel}`;
+                if (btnLabel) btnLabel.textContent = `☁ ${azModel}`;
             } else {
                 ind.className = 'provider-indicator local';
-                const model = modelCfg?.foundry_local?.model || 'Foundry Local';
+                const model = document.getElementById('local-model')?.value || modelCfg?.foundry_local?.model || 'Foundry Local';
                 txt.textContent = `Using: Foundry Local (${model})`;
                 if (chip) chip.className = 'provider-chip local';
                 if (chipTxt) chipTxt.textContent = `🖥 ${model}`;

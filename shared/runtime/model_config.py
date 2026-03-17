@@ -120,3 +120,66 @@ def _list_local_models() -> list[str]:
         return aliases if aliases else [_config.local_model]
     except Exception:
         return [_config.local_model]
+
+
+def _list_local_models_detailed() -> list[dict]:
+    """Return all Foundry Local catalog models with status: 'loaded', 'cached', or 'catalog'.
+
+    Status priority: loaded (in memory) > cached (on disk) > catalog (available to download).
+    Deduplicates by alias, preferring the best available variant.
+    """
+    try:
+        from foundry_local import FoundryLocalManager
+        manager = FoundryLocalManager(bootstrap=False)
+        if not manager.is_service_running():
+            return [_minimal_model_entry(_config.local_model, "cached")]
+
+        loaded_ids = {m.id for m in manager.list_loaded_models()}
+        cached_ids = {m.id for m in manager.list_cached_models()}
+
+        seen_aliases: dict[str, dict] = {}
+        for m in manager.list_catalog_models():
+            if not m.alias:
+                continue
+            if m.id in loaded_ids:
+                status = "loaded"
+            elif m.id in cached_ids:
+                status = "cached"
+            else:
+                status = "catalog"
+
+            entry = {
+                "alias": m.alias,
+                "id": m.id,
+                "status": status,
+                "device_type": str(m.device_type) if m.device_type else None,
+                "file_size_mb": m.file_size_mb,
+                "supports_tool_calling": m.supports_tool_calling,
+                "publisher": m.publisher,
+                "task": m.task,
+            }
+            # Keep the highest-priority status if alias already seen
+            prev = seen_aliases.get(m.alias)
+            if prev is None:
+                seen_aliases[m.alias] = entry
+            else:
+                rank = {"loaded": 0, "cached": 1, "catalog": 2}
+                if rank.get(status, 9) < rank.get(prev["status"], 9):
+                    seen_aliases[m.alias] = entry
+
+        result = list(seen_aliases.values())
+        # Sort: loaded first, then cached, then catalog; alphabetical within each group
+        rank = {"loaded": 0, "cached": 1, "catalog": 2}
+        result.sort(key=lambda x: (rank.get(x["status"], 9), x["alias"]))
+        return result if result else [_minimal_model_entry(_config.local_model, "cached")]
+    except Exception as e:
+        print(f"[model_config] Could not list detailed models: {e}")
+        return [_minimal_model_entry(_config.local_model, "cached")]
+
+
+def _minimal_model_entry(alias: str, status: str) -> dict:
+    return {
+        "alias": alias, "id": alias, "status": status,
+        "device_type": None, "file_size_mb": None,
+        "supports_tool_calling": None, "publisher": None, "task": None,
+    }

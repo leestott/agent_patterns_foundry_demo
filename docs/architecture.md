@@ -2,9 +2,9 @@
 
 ## Overview
 
-The Visual Agent Patterns Demo Pack is a collection of six demos that showcase
+The Visual Agent Patterns Demo Pack is a collection of seven demos that showcase
 different **Microsoft Agent Framework** orchestration patterns running against
-**Foundry Local** (on-device AI runtime).
+**Foundry Local** (on-device AI runtime) or **Microsoft Foundry** (cloud).
 
 ## Layers
 
@@ -35,7 +35,7 @@ different **Microsoft Agent Framework** orchestration patterns running against
 | Concurrent | `ConcurrentBuilder` | 2 (Parallel research), 6 (Swarm generators) |
 | Handoff | `HandoffBuilder` | 3 (Customer Support triage), 5 (Route to specialist) |
 | Group Chat | `GroupChatBuilder` | 4 (Brainstorm network) |
-| Magentic | `MagenticBuilder` | Available in `orchestrations.py` for custom demos |
+| Magentic One | `MagenticBuilder` | 7 (Magentic One Assessment) |
 
 ## Runtime Flow
 
