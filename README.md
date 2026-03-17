@@ -5,6 +5,7 @@
 > Run multi-agent orchestrations **entirely on-device** with animated graph visualizations, live message tracing, and replay capabilities.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-brightgreen)
 ![Foundry Local](https://img.shields.io/badge/Foundry%20Local-on--device-green)
 ![Microsoft Foundry](https://img.shields.io/badge/Microsoft%20Foundry-cloud-orange)
 ![Agent Framework](https://img.shields.io/badge/Agent%20Framework-orchestrations-purple)
