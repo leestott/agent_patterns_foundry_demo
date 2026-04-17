@@ -80,7 +80,7 @@ This downloads (first run only) and starts the `qwen2.5-1.5b` model — a small,
 ### Step 3 — Clone the repository
 
 ```bash
-git clone https://github.com/your-org/agent-patterns-foundry-demo.git
+git clone https://github.com/leestott/agent_patterns_foundry_demo
 cd agent-patterns-foundry-demo
 ```
 
